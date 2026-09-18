@@ -20,12 +20,15 @@ manquantes font partie du travail demande.
 Python 3.9+. Aucune dependance externe.
 """
 
+
 from __future__ import annotations
 
 import json
 import unicodedata
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
+from sys import stderr
+
 
 __all__ = [
     "ErreurFichier",
@@ -42,7 +45,6 @@ VERSION_ATTENDUE = 1
 
 class ErreurFichier(Exception):
     """Fichier d'entree absent, illisible, ou d'un type inattendu."""
-
 
 # ---------------------------------------------------------------------------
 # Lecture
@@ -107,8 +109,136 @@ def _lire_json(chemin: str | Path, format_attendu: str) -> Dict[str, Any]:
 
 
 def charger_carte(chemin: str | Path) -> Dict[str, Any]:
-    """Charge un fichier carte. Voir l'enonce, section 5.1."""
-    return _lire_json(chemin, "robot-reconfort/carte")
+    dict_carte = _lire_json(chemin, "robot-reconfort/carte")
+
+    # ----------------------
+    # Vérification existence
+    # ----------------------
+    
+    # Vérifier nom
+    if "nom" not in dict_carte:
+        print("Erreur chargement carte : L'appartement n'a pas de nom.", file=stderr)
+        exit(1)
+    
+    # Vérifier dimensions
+    if "dimensions" not in dict_carte:
+        print("Erreur chargement carte : L'appartement doit spécifier les dimensions", file=stderr)
+        exit(1)
+    
+    # Vérifier existence grille
+    if "grille" not in dict_carte :
+        print("Erreur chargement carte : Aucune grille disponible.", file=stderr)
+        exit(1)
+    
+    # Vérifier existence position depart robot
+    if "depart_robot" not in dict_carte:
+        print("Erreur chargement carte : Aucune position de départ robot.", file=stderr)
+        exit(1)
+    
+    # Vérifier existence armoire
+    if "armoire" not in dict_carte:
+        print("Erreur chargement carte : Aucune armoire définie.", file=stderr)
+        exit(1)
+    
+    # Vérifier existence dictionnaire
+    if "dictionnaire" not in dict_carte:
+        print("Erreur chargement carte : Aucun dictionnaire défini.", file=stderr)
+        exit(1)
+    
+    # Vérifier existence résidents
+    if "residents" not in dict_carte:
+        print("Erreur chargement carte : Aucun résident défini.", file=stderr)
+        exit(1)
+
+    # ------------------------------------------
+    # Vérification type et cohérence des données
+    # ------------------------------------------
+
+    # Vérifier nom vide
+    if dict_carte["nom"] == "":
+        print("Erreur chargement carte : Nom invalide", file=stderr)
+        exit(1)
+    
+    # Vérifier cohérence dimensions
+    if "largeur" not in dict_carte["dimensions"] or \
+    "hauteur" not in dict_carte["dimensions"] or \
+    dict_carte["dimensions"]["largeur"] <= 3 or \
+    dict_carte["dimensions"]["hauteur"] <= 3 :
+        print("Carte : Dimensions invalides.", file=stderr)
+        exit(1)
+    
+    largeur = dict_carte["dimensions"]["largeur"]
+    hauteur = dict_carte["dimensions"]["hauteur"]
+
+    # Vérifier cohérence grille/dimensions
+    if len(dict_carte["grille"]) != hauteur or \
+    False in [len(x) == largeur for x in dict_carte["grille"]]:
+        print("Erreur chargement carte : Grille invalide.", file=stderr)
+        exit(1)
+    
+    # Vérifier position depart robot
+    if not (0 <= dict_carte["depart_robot"][0] < hauteur) or \
+    not (0 <= dict_carte["depart_robot"][1] < largeur):
+        print("Erreur chargement carte : Position départ du robot dépasse la grille", file=stderr)
+        exit(1)
+    
+    # Vérifier position armoire
+    if "position" not in dict_carte["armoire"]:
+        print("Erreur chargement carte : Pas de position d'armoire.", file=stderr)
+        exit(1)
+    if not (0 <= dict_carte["armoire"]["position"][0] < hauteur) or \
+    not (0 <= dict_carte["armoire"]["position"][1] < largeur):
+        print("Erreur chargement carte : Position armoire dépasse la grille", file=stderr)
+        exit(1)
+    
+    # Vérifier position dictionnaire
+    if "position" not in dict_carte["dictionnaire"]:
+        print("Erreur chargement carte : Pas de position d'armoire.", file=stderr)
+        exit(1)
+    if not (0 <= dict_carte["dictionnaire"]["position"][0] < hauteur) or \
+    not (0 <= dict_carte["dictionnaire"]["position"][1] < largeur):
+        print("Erreur chargement carte : Position dictionnaire dépasse la grille", file=stderr)
+        exit(1)
+    
+
+    # Vérifier chaque position dans la grille
+    if dict_carte["grille"][dict_carte["depart_robot"][0]][dict_carte["depart_robot"][1]] != 'R':
+        print("Erreur chargement carte : Position départ du robot invalide selon grille", file=stderr)
+        exit(1)
+    if dict_carte["grille"][dict_carte["armoire"]["position"][0]][dict_carte["armoire"]["position"][1]] != 'A':
+        print("Erreur chargement carte : Position armoire invalide selon grille", file=stderr)
+        exit(1)
+    if dict_carte["grille"][dict_carte["dictionnaire"]["position"][0]][dict_carte["dictionnaire"]["position"][1]] != 'D':
+        print("Erreur chargement carte : Position dictionnaire invalide selon grille", file=stderr)
+        exit(1)
+    
+    # Pour chaque résident
+    id_residents = []
+    for resident in dict_carte["residents"]:
+        # Vérifier existence propriétés
+        if "id" not in resident or "nom" not in resident or "position" not in resident:
+            print("Erreur chargement carte : Données résidents invalides", file=stderr)
+            exit(1)
+        
+        # Vérifier position résident selon dimensions
+        if not (0 <= resident["position"][0] < hauteur) or \
+        not (0 <= resident["position"][1] < largeur):
+            print(f"Erreur chargement carte : Position résident {resident["id"]} dépasse la grille", file=stderr)
+            exit(1)
+
+        # Vérifier posiion résident dans la grille
+        if dict_carte["grille"][resident["position"][0]][resident["position"][1]] != 'P':
+            print(f"Erreur chargement carte : Position résident {resident["id"]} invalide selon grille", file=stderr)
+            exit(1)
+        
+        # Unicité de l'identifiant
+        if resident["id"] in id_residents:
+            print(f"Erreur chargement carte : Résident {resident["id"]} non unique.", file=stderr)
+            exit(1)
+        
+        id_residents.append(resident["id"])
+
+    return dict_carte
 
 
 def charger_dictionnaire(chemin: str | Path) -> Dict[str, Any]:
