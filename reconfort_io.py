@@ -125,6 +125,11 @@ def charger_carte(chemin: str | Path) -> Dict[str, Any]:
         print("Erreur chargement carte : L'appartement doit spécifier les dimensions", file=stderr)
         exit(1)
     
+    # Vérifier légende
+    if "legende" not in dict_carte:
+        print("Erreur chargement carte : Aucune légende définie.", file=stderr)
+        exit(1)
+    
     # Vérifier existence grille
     if "grille" not in dict_carte :
         print("Erreur chargement carte : Aucune grille disponible.", file=stderr)
@@ -166,6 +171,13 @@ def charger_carte(chemin: str | Path) -> Dict[str, Any]:
     dict_carte["dimensions"]["hauteur"] <= 3 :
         print("Carte : Dimensions invalides.", file=stderr)
         exit(1)
+    
+    signes = ["#", ".", "R", "A", "D", "P"]
+    # Vérifier légende
+    for signe in signes:
+        if signe not in dict_carte["legende"]:
+            print(f"Erreur chargement carte : Légende manquante - \"{signe}\"", file=stderr)
+            exit(1)
     
     largeur = dict_carte["dimensions"]["largeur"]
     hauteur = dict_carte["dimensions"]["hauteur"]
@@ -242,7 +254,16 @@ def charger_carte(chemin: str | Path) -> Dict[str, Any]:
 
 
 def charger_dictionnaire(chemin: str | Path) -> Dict[str, Any]:
-    """Charge un fichier dictionnaire. Voir l'enonce, section 5.2."""
+    # ----------------------
+    # Vérification existence
+    # ----------------------
+
+
+    # ------------------------------------------
+    # Vérification type et cohérence des données
+    # ------------------------------------------
+
+
     return _lire_json(chemin, "robot-reconfort/dictionnaire")
 
 
