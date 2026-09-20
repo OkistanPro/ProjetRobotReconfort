@@ -311,17 +311,78 @@ def charger_carte(chemin: str | Path) -> Dict[str, Any]:
 
 
 def charger_dictionnaire(chemin: str | Path) -> Dict[str, Any]:
+    dict_d = _lire_json(chemin, "robot-reconfort/dictionnaire")
     # ----------------------
     # Vérification existence
     # ----------------------
+    if "nom" not in dict_d:
+        print("Erreur chargement dictionnaire : Dictionnaire sans nom.", file=stderr)
+        exit(1)
+    
+    if "emotions" not in dict_d:
+        print("Erreur chargement dictionnaire : Emotions manquantes.", file=stderr)
+        exit(1)
+    
+    if "intensites" not in dict_d:
+        print("Erreur chargement dictionnaire : Intensités manquantes.", file=stderr)
+        exit(1)
 
+    if "entrees" not in dict_d:
+        print("Erreur chargement dictionnaire : Aucune entrée dans dictionnaire.", file=stderr)
+        exit(1)
 
     # ------------------------------------------
     # Vérification type et cohérence des données
     # ------------------------------------------
 
+    # Type des émotions
+    if type(dict_d["emotions"]) is not list:
+        print("Erreur chargement dictionnaire : Emotions doit être list[str]", file=stderr)
+        exit(1)
 
-    return _lire_json(chemin, "robot-reconfort/dictionnaire")
+    # Type des intensités
+    if type(dict_d["intensites"]) is not list:
+        print("Erreur chargement dictionnaire : Intensités doit être list[str]", file=stderr)
+        exit(1)
+    
+    # Type des entrées
+    if type(dict_d["entrees"]) is not list:
+        print("Erreur chargement dictionnaire : Entrées doit être liste d'objets", file=stderr)
+        exit(1)
+
+    list_formes: list[str] = []
+
+    # Vérifier propriétés de chaque entrée
+    for i in range(len(dict_d["entrees"])):
+        if "formes" not in dict_d["entrees"][i] or type(dict_d["entrees"][i]["formes"]) is not list:
+            print(f"Erreur chargement dictionnaire : Entrée {i} - Formes - type invalide ou propriété non défini.", file=stderr)
+            exit(1)
+        
+        if "emotion" not in dict_d["entrees"][i] or type(dict_d["entrees"][i]["emotion"]) is not str:
+            print(f"Erreur chargement dictionnaire : Entrée {i} - émotion - type invalide ou propriété non défini.", file=stderr)
+            exit(1)
+        
+        if "intensite" not in dict_d["entrees"][i] or type(dict_d["entrees"][i]["intensite"]) is not str:
+            print(f"Erreur chargement dictionnaire : Entrée {i} - intensité - type invalide ou propriété non défini.", file=stderr)
+            exit(1)
+        
+        # Vérifier présence émotion et intensité
+        if dict_d["entrees"][i]["emotion"] not in dict_d["emotions"]:
+            print(f"Erreur chargement dictionnaire : Entrée {i} - émotion invalide.", file=stderr)
+            exit(1)
+        
+        if dict_d["entrees"][i]["intensite"] not in dict_d["intensites"]:
+            print(f"Erreur chargement dictionnaire : Entrée {i} - intensité invalide.", file=stderr)
+            exit(1)
+        
+        # Vérifier unicité formes
+        for forme in dict_d["entrees"][i]["formes"]:
+            if forme in list_formes:
+                print(f"Erreur chargement dictionnaire : Entrée {i} - forme \"{forme}\" existe dans une autre entrée.", file=stderr)
+                exit(1)
+            list_formes.append(forme)
+
+    return dict_d
 
 
 def charger_armoire(chemin: str | Path) -> Dict[str, Any]:
