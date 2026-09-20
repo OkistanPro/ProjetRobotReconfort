@@ -154,9 +154,29 @@ def charger_carte(chemin: str | Path) -> Dict[str, Any]:
     if "residents" not in dict_carte:
         print("Erreur chargement carte : Aucun résident défini.", file=stderr)
         exit(1)
+    
+    # -----------------------------
+    # Vérification type des données
+    # -----------------------------
+
+    for key in dict_carte:
+        match key:
+            case "nom":
+                if type(dict_carte[key]) is not str:
+                    print(f"Erreur chargement carte : Type propriété {key} - str attendu.", file=stderr)
+                    exit(1)
+            case "dimensions":
+                # TODO
+                if type(dict_carte[key]) is not dict[str, int]:
+                    print(f"Erreur chargement carte : Type propriété {key} - Dict[String, int] attendu.", file=stderr)
+                    exit(1)
+            case "legende":
+                if dict_carte[key] is not dict(str, str):
+                    print(f"Erreur chargement carte : Type propriété {key} - Dict[String, String] attendu.", file=stderr)
+                    exit(1)
 
     # ------------------------------------------
-    # Vérification type et cohérence des données
+    # Vérification cohérence des données
     # ------------------------------------------
 
     # Vérifier nom vide
@@ -185,8 +205,41 @@ def charger_carte(chemin: str | Path) -> Dict[str, Any]:
     # Vérifier cohérence grille/dimensions
     if len(dict_carte["grille"]) != hauteur or \
     False in [len(x) == largeur for x in dict_carte["grille"]]:
-        print("Erreur chargement carte : Grille invalide.", file=stderr)
+        print("Erreur chargement carte : Dimensions grille invalide.", file=stderr)
         exit(1)
+
+    # Vérifier données grille
+    nb_depart_robot = 0
+    nb_armoire = 0
+    nb_dict = 0
+    nb_residents = 0
+
+    for ligne in dict_carte["grille"]:
+        for c in ligne:
+            match c:
+                case "R":
+                    nb_depart_robot += 1
+                    if nb_depart_robot > 1:
+                        print("Erreur chargement carte : Plusieurs départs sur la grille.", file=stderr)
+                        exit(1)
+                case "A":
+                    nb_armoire += 1
+                    if nb_armoire > 1:
+                        print("Erreur chargement carte : Plusieurs armoires sur la grille.", file=stderr)
+                        exit(1)
+                case "D":
+                    nb_dict += 1
+                    if nb_dict > 1:
+                        print("Erreur chargement carte : Plusieurs dictionnaires sur la grille.", file=stderr)
+                        exit(1)
+                case "P":
+                    nb_residents += 1
+                case "#" | ".":
+                    pass
+                case _:
+                    print("Erreur chargement carte : Grille conient des caractères invalides.", file=stderr)
+                    exit(1)
+            
     
     # Vérifier position depart robot
     if not (0 <= dict_carte["depart_robot"][0] < hauteur) or \
@@ -222,6 +275,11 @@ def charger_carte(chemin: str | Path) -> Dict[str, Any]:
         exit(1)
     if dict_carte["grille"][dict_carte["dictionnaire"]["position"][0]][dict_carte["dictionnaire"]["position"][1]] != 'D':
         print("Erreur chargement carte : Position dictionnaire invalide selon grille", file=stderr)
+        exit(1)
+
+    # Vérifier nombre résidents
+    if len(dict_carte["residents"]) != nb_residents:
+        print("Erreur chargement carte : Incohérence nombre de résidents sur la grille.", file=stderr)
         exit(1)
     
     # Pour chaque résident
