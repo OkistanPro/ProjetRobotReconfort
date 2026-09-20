@@ -187,8 +187,6 @@ def charger_armoire(chemin: str | Path) -> Dict[str, Any]:
         print("Erreur chargement armoire : Position du casier de départ en dehors de l'armoire", file=stderr)
         exit(1)
     
-    # Vérifier que les casiers sont bien dans la grille
-    
     # Pour chaque casier
     coordonnées_casiers = []
     for i in range(len(dict_armoire["casiers"])):
@@ -228,8 +226,73 @@ def charger_armoire(chemin: str | Path) -> Dict[str, Any]:
 
 
 def charger_scenario(chemin: str | Path) -> Dict[str, Any]:
-    """Charge un fichier scenario. Voir l'enonce, section 5.4."""
-    return _lire_json(chemin, "robot-reconfort/scenario")
+    dict_scenario = _lire_json(chemin, "robot-reconfort/scenario")
+
+    # ----------------------
+    # Vérification existence
+    # ----------------------
+    
+    # Vérifier nom
+    if "nom" not in dict_scenario:
+        print("Erreur chargement scenario : Le scenario n'a pas de nom.", file=stderr)
+        exit(1)
+        
+    # Vérifier carte
+    if "carte" not in dict_scenario:
+        print("Erreur chargement scenario : Le scenario n'a pas de carte.", file=stderr)
+        exit(1)
+        
+    # Vérifier armoire
+    if "armoire" not in dict_scenario:
+        print("Erreur chargement scenario : Le scenario n'a pas d'armoire.", file=stderr)
+        exit(1)
+        
+    # Vérifier demandes
+    if "demandes" not in dict_scenario:
+        print("Erreur chargement scenario : Le scenario n'a pas de demandes.", file=stderr)
+        exit(1)
+        
+    # ------------------------------------------
+    # Vérification type et cohérence des données
+    # ------------------------------------------
+    
+    # Vérifier nom vide
+    if dict_scenario["nom"] == "":
+        print("Erreur chargement scenario : Nom invalide.", file=stderr)
+        exit(1)
+        
+    # Vérifier carte vide
+    if dict_scenario["carte"] == "":
+        print("Erreur chargement scenario : Carte invalide.", file=stderr)
+        exit(1)
+        
+    # Vérifier armoire vide
+    if dict_scenario["armoire"] == "":
+        print("Erreur chargement scenario : Armoire invalide.", file=stderr)
+        exit(1) 
+        
+    # Pour chaque demande
+    for i in range(len(dict_scenario["demandes"])):
+        demande = dict_scenario["demandes"][i]
+        # Vérifier existence propriétés
+        if "numero" not in demande or "resident" not in demande or "message" not in demande:
+            print("Erreur chargement scenario : Données demandes invalides", file=stderr)
+            exit(1)
+        
+        # Vérifier que les numéros des demandes correspondent
+        if demande["numero"] != i+1:
+            print("Erreur chargement scenario : Numérotation des demandes invalide", file=stderr)
+            exit(1)
+        # Vérifier que le résident n'est pas vide
+        if demande["resident"] == "":
+            print(f"Erreur chargement scenario : Le résident de la demande n°{i+1} est vide.", file=stderr)
+            exit(1)
+        # Vérifier que le message n'est pas vide
+        if demande["message"] == "":
+            print(f"Erreur chargement scenario : Le message de la demande n°{i+1} est vide.", file=stderr)
+            exit(1)
+        
+    return dict_scenario
 
 
 # ---------------------------------------------------------------------------
