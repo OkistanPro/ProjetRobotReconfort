@@ -166,12 +166,11 @@ def charger_carte(chemin: str | Path) -> Dict[str, Any]:
                     print(f"Erreur chargement carte : Type propriété {key} - str attendu.", file=stderr)
                     exit(1)
             case "dimensions":
-                # TODO
-                if type(dict_carte[key]) is not dict[str, int]:
+                if type(dict_carte[key]) is not dict:
                     print(f"Erreur chargement carte : Type propriété {key} - Dict[String, int] attendu.", file=stderr)
                     exit(1)
             case "legende":
-                if dict_carte[key] is not dict(str, str):
+                if type(dict_carte[key]) is not dict:
                     print(f"Erreur chargement carte : Type propriété {key} - Dict[String, String] attendu.", file=stderr)
                     exit(1)
 
