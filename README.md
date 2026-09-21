@@ -1,10 +1,10 @@
-# Robot de réconfort — NOM1 & NOM2
+# Robot de réconfort — Jonathan Merlet & Emmanuel Sanchez
 
 Projet de semestre, master informatique. Un robot à perception locale
 consulte un dictionnaire, fouille une armoire et rapporte un objet à un
 résident.
 
-Langage : *à compléter* — Version : *à compléter*
+Langage : Python — Version : *à compléter*
 
 ## Lancer
 
