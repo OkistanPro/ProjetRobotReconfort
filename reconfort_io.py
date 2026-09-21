@@ -24,6 +24,7 @@ Python 3.9+. Aucune dependance externe.
 from __future__ import annotations
 
 import json
+from sys import stderr
 import unicodedata
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
@@ -53,7 +54,7 @@ class ErreurFichier(Exception):
 def _lire_json(chemin: str | Path, format_attendu: str) -> Dict[str, Any]:
     """Lit un fichier JSON UTF-8 et verifie son en-tete.
 
-    Ce qui EST verifie ici :
+    Ce qui EST verifie ici : 
       - le fichier existe et se lit en UTF-8 ;
       - son contenu est du JSON valide ;
       - la racine est un objet ;
@@ -386,13 +387,181 @@ def charger_dictionnaire(chemin: str | Path) -> Dict[str, Any]:
 
 
 def charger_armoire(chemin: str | Path) -> Dict[str, Any]:
-    """Charge un fichier armoire. Voir l'enonce, section 5.3."""
-    return _lire_json(chemin, "robot-reconfort/armoire")
+    dict_armoire = _lire_json(chemin, "robot-reconfort/armoire")
+    
+    # ----------------------
+    # Vérification existence
+    # ----------------------
+    
+    # Vérifier nom
+    if "nom" not in dict_armoire:
+        print("Erreur chargement armoire : L'armoire n'a pas de nom.", file=stderr)
+        exit(1)
+        
+    # Vérifier existence des émotions
+    if "emotions" not in dict_armoire:
+        print("Erreur chargement armoire : L'armoire n'a pas de liste d'émotions.", file=stderr)
+        exit(1)
+        
+    # Vérifier existence des intensités
+    if "intensites" not in dict_armoire:
+        print("Erreur chargement armoire : L'armoire n'a pas de liste d'intensités.", file=stderr)
+        exit(1)
+        
+    # Vérifier la position du casier de départ
+    if "casier_depart" not in dict_armoire:
+        print("Erreur chargement armoire : L'armoire n'a pas de position de casier de départ.", file=stderr)
+        exit(1)
+    
+    # Vérifier existence des casiers
+    if "casiers" not in dict_armoire:
+        print("Erreur chargement armoire : L'armoire n'a pas de liste de casiers.", file=stderr)
+        exit(1)
+    
+    # ------------------------------------------
+    # Vérification type et cohérence des données
+    # ------------------------------------------
+    
+    # Vérifier nom vide
+    if dict_armoire["nom"] == "":
+        print("Erreur chargement armoire : Nom invalide.", file=stderr)
+        exit(1)
+        
+    # Vérifier que les émotions sont les bonnes, et dans le bon ordre
+    emotions_attendues = [
+    "joie",
+    "confiance",
+    "peur",
+    "surprise",
+    "tristesse",
+    "degout",
+    "colere",
+    "anticipation"
+  ]
+    if dict_armoire["emotions"] != emotions_attendues:
+        print("Erreur chargement armoire : Liste d'émotions invalide.", file=stderr)
+        exit(1)
+    
+    # Vérifier que les intensités sont les bonnes, et dans le bon ordre
+    intensites_attendues = ["faible", "moyenne", "forte"]
+    if dict_armoire["intensites"] != intensites_attendues:
+        print("Erreur chargement armoire : Liste d'intensités invalide.", file=stderr)
+        exit(1)
+        
+    # Vérifier position du casier de départ
+    # L'armoire est une grille de taille 3x8
+    
+    if not (0 <= dict_armoire["casier_depart"][0] < 3) or \
+    not (0 <= dict_armoire["casier_depart"][1] < 8):
+        print("Erreur chargement armoire : Position du casier de départ en dehors de l'armoire", file=stderr)
+        exit(1)
+    
+    # Pour chaque casier
+    coordonnées_casiers = []
+    for i in range(len(dict_armoire["casiers"])):
+        casier = dict_armoire["casiers"][i]
+        ligne_casier = casier["ligne"]
+        colonne_casier = casier["colonne"]
+        coordonnées_casiers.append((ligne_casier, colonne_casier))
+        # Vérifier existence propriétés
+        if "ligne" not in casier or "colonne" not in casier or "emotion" not in casier or "intensite" not in casier or "objet" not in casier:
+            print("Erreur chargement casier : Données casiers invalides", file=stderr)
+            exit(1)
+        
+        # Vérifier position casier
+        if not (0 <= ligne_casier < 3) or \
+        not (0 <= colonne_casier < 8):
+            print(f"Erreur chargement armoire : Position du casier n°{i} en dehors de l'armoire", file=stderr)
+            exit(1)
+
+        # Vérifier la correspondance entre la position du casier et son émotion/intensité
+        if (casier["intensite"], casier["emotion"]) != (intensites_attendues[ligne_casier], emotions_attendues[colonne_casier]):
+            print(f"Erreur chargement armoire : L'émotion/intensité de l'objet du casier n°{i} ne correspond pas à sa position.", file=stderr)
+            exit(1)
+        
+         # Vérifier que l'objet n'est pas vide
+        if casier["objet"] == "":
+            print(f"Erreur chargement armoire : L'objet du casier n°{i} est vide.", file=stderr)
+            exit(1)
+        
+        # Vérifier qu'il n'y a pas de casier en double
+        if (ligne_casier, colonne_casier) in coordonnées_casiers:
+            print(f"Erreur chargement armoire : Le casier n°{i} est en double.", file=stderr)
+            exit(1)
+        
+        coordonnées_casiers.append((ligne_casier, colonne_casier))
+    
+    return dict_armoire
 
 
 def charger_scenario(chemin: str | Path) -> Dict[str, Any]:
-    """Charge un fichier scenario. Voir l'enonce, section 5.4."""
-    return _lire_json(chemin, "robot-reconfort/scenario")
+    dict_scenario = _lire_json(chemin, "robot-reconfort/scenario")
+
+    # ----------------------
+    # Vérification existence
+    # ----------------------
+    
+    # Vérifier nom
+    if "nom" not in dict_scenario:
+        print("Erreur chargement scenario : Le scenario n'a pas de nom.", file=stderr)
+        exit(1)
+        
+    # Vérifier carte
+    if "carte" not in dict_scenario:
+        print("Erreur chargement scenario : Le scenario n'a pas de carte.", file=stderr)
+        exit(1)
+        
+    # Vérifier armoire
+    if "armoire" not in dict_scenario:
+        print("Erreur chargement scenario : Le scenario n'a pas d'armoire.", file=stderr)
+        exit(1)
+        
+    # Vérifier demandes
+    if "demandes" not in dict_scenario:
+        print("Erreur chargement scenario : Le scenario n'a pas de demandes.", file=stderr)
+        exit(1)
+        
+    # ------------------------------------------
+    # Vérification type et cohérence des données
+    # ------------------------------------------
+    
+    # Vérifier nom vide
+    if dict_scenario["nom"] == "":
+        print("Erreur chargement scenario : Nom invalide.", file=stderr)
+        exit(1)
+        
+    # Vérifier carte vide
+    if dict_scenario["carte"] == "":
+        print("Erreur chargement scenario : Carte invalide.", file=stderr)
+        exit(1)
+        
+    # Vérifier armoire vide
+    if dict_scenario["armoire"] == "":
+        print("Erreur chargement scenario : Armoire invalide.", file=stderr)
+        exit(1) 
+        
+    # Pour chaque demande
+    for i in range(len(dict_scenario["demandes"])):
+        demande = dict_scenario["demandes"][i]
+        # Vérifier existence propriétés
+        if "numero" not in demande or "resident" not in demande or "message" not in demande:
+            print("Erreur chargement scenario : Données demandes invalides", file=stderr)
+            exit(1)
+        
+        # Vérifier que les numéros des demandes correspondent
+        if demande["numero"] != i+1:
+            print("Erreur chargement scenario : Numérotation des demandes invalide", file=stderr)
+            exit(1)
+        # Vérifier que le résident n'est pas vide
+        if demande["resident"] == "":
+            print(f"Erreur chargement scenario : Le résident de la demande n°{i+1} est vide.", file=stderr)
+            exit(1)
+        # Vérifier que le message n'est pas vide
+        if demande["message"] == "":
+            print(f"Erreur chargement scenario : Le message de la demande n°{i+1} est vide.", file=stderr)
+            exit(1)
+        
+    return dict_scenario
 
 
 # ---------------------------------------------------------------------------
