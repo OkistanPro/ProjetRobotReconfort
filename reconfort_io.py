@@ -47,6 +47,7 @@ VERSION_ATTENDUE = 1
 class ErreurFichier(Exception):
     """Fichier d'entree absent, illisible, ou d'un type inattendu."""
 
+
 # ---------------------------------------------------------------------------
 # Lecture
 # ---------------------------------------------------------------------------
@@ -258,7 +259,7 @@ def charger_carte(chemin: str | Path) -> Dict[str, Any]:
     
     # Vérifier position dictionnaire
     if "position" not in dict_carte["dictionnaire"]:
-        print("Erreur chargement carte : Pas de position d'armoire.", file=stderr)
+        print("Erreur chargement carte : Pas de position de dictionnaire.", file=stderr)
         exit(1)
     if not (0 <= dict_carte["dictionnaire"]["position"][0] < hauteur) or \
     not (0 <= dict_carte["dictionnaire"]["position"][1] < largeur):
