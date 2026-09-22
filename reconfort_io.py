@@ -462,7 +462,6 @@ def charger_armoire(chemin: str | Path) -> Dict[str, Any]:
         casier = dict_armoire["casiers"][i]
         ligne_casier = casier["ligne"]
         colonne_casier = casier["colonne"]
-        coordonnées_casiers.append((ligne_casier, colonne_casier))
         # Vérifier existence propriétés
         if "ligne" not in casier or "colonne" not in casier or "emotion" not in casier or "intensite" not in casier or "objet" not in casier:
             print("Erreur chargement casier : Données casiers invalides", file=stderr)
