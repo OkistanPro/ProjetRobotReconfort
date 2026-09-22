@@ -1,3 +1,4 @@
+from io import TextIOWrapper
 from random import randint
 from copy import deepcopy
 import json
@@ -7,7 +8,7 @@ from tempfile import TemporaryFile
 import os
 
 
-class TestJSONIntegrity:
+class TestJSONChargerCarte:
     
     def saveData(self, data):
         # On l'enregistre
@@ -20,7 +21,7 @@ class TestJSONIntegrity:
         return process.returncode
         
 
-    def test_charger_carte_ok(self):
+    def test_ok(self):
         # Charger JSON
         with open("cartes/appartement_test.json", "r") as file:
             data = json.load(file)
@@ -29,7 +30,7 @@ class TestJSONIntegrity:
             # Code bon
             assert self.launchAndReturnCode() == 0
 
-    def test_charger_carte_existence(self, subtests : pytest.Subtests):
+    def test_existence(self, subtests : pytest.Subtests):
         # Charger JSON
         with open("cartes/appartement_test.json", "r") as file:
             data = json.load(file)
@@ -49,7 +50,7 @@ class TestJSONIntegrity:
                     # On remet data
                     data = deepcopy(data_copy)
     
-    def test_charger_carte_type(self, subtests : pytest.Subtests):
+    def test_type(self, subtests : pytest.Subtests):
         # Charger JSON
         with open("cartes/appartement_test.json", "r") as file:
             data = json.load(file)
@@ -71,7 +72,7 @@ class TestJSONIntegrity:
                     # On remet data
                     data = deepcopy(data_copy)
     
-    def test_charger_carte_coherence(self, subtests : pytest.Subtests):
+    def test_coherence(self, subtests : pytest.Subtests):
         # Charger JSON
         with open("cartes/appartement_test.json", "r") as file:
             data = json.load(file)
@@ -280,7 +281,6 @@ class TestJSONIntegrity:
                 assert self.launchAndReturnCode() == 1
                 data = deepcopy(data_copy)
 
-
             with subtests.test("Résidents"):
                 # Pas d'identifiant
                 del data["residents"][0]["id"]
@@ -331,3 +331,149 @@ class TestJSONIntegrity:
                 self.saveData(data)
                 assert self.launchAndReturnCode() == 1
                 data = deepcopy(data_copy)
+
+
+class TestJSONChargerDict:
+    original_dict : dict
+    
+    def save_original_dict(self):
+        file = open("donnees/dictionnaire.json", "r", encoding="utf-8")
+        self.original_dict = json.load(file)
+    
+    def restore_original_dict(self):
+        with open("donnees/dictionnaire.json", "w", encoding="utf-8") as file_write:
+            json.dump(self.original_dict, file_write, indent=2)
+        
+    def save_data(self, data):
+        with open("donnees/dictionnaire.json", "w", encoding="utf-8") as file_write:
+            json.dump(data, file_write)
+        
+    def launchAndReturnCode(self):
+        process = subprocess.run(["python3", "./demo.py", "cartes/appartement_test.json", "cartes/scenario_01.json", "donnees", "sortie.json"])
+        return process.returncode
+    
+    def errortest(self, data):
+        self.save_data(data)
+        # Erreur
+        assert self.launchAndReturnCode() == 1
+        # Remettre le fichier original
+        self.restore_original_dict()
+        # Données recopiées
+        data = deepcopy(self.original_dict)
+
+    def test_ok(self):
+        assert self.launchAndReturnCode() == 0
+    
+    def test_existence(self, subtests : pytest.Subtests):
+        # Capture du dictionnaire original
+        self.save_original_dict()
+
+        # Données à travailler
+        data: dict = deepcopy(self.original_dict)
+
+        # Pour chaque propriété
+        for prop in self.original_dict.keys():
+            with subtests.test("Existence " + prop, prop=prop):
+                # Supprimer la propriété
+                del data[prop]
+                # Sauvegarder sur le fichier dictionnaire
+                self.save_data(data)
+                # Erreur
+                assert self.launchAndReturnCode() == 1
+                # Remettre le fichier original
+                self.restore_original_dict()
+                # Données recopiées
+                data = deepcopy(self.original_dict)
+    
+    def test_type(self, subtests : pytest.Subtests):
+        # Capture du dictionnaire original
+        self.save_original_dict()
+
+        # Données à travailler
+        data: dict = deepcopy(self.original_dict)
+
+        prop_to_test = ["emotions", "intensites", "entrees"]
+
+        # On remplace par des entiers
+        for prop in prop_to_test:
+            with subtests.test("Remplacement propriété", prop=prop):
+                data[prop] = 45
+                # Sauvegarder sur le fichier dictionnaire
+                self.save_data(data)
+                # Erreur
+                assert self.launchAndReturnCode() == 1
+                # Remettre le fichier original
+                self.restore_original_dict()
+                # Données recopiées
+                data = deepcopy(self.original_dict)
+        
+        # Vérifier type propriétés
+        with subtests.test("Remplacement entrée - formes"):
+            # Prendre une entrée au hasard
+            i = randint(0, len(data["entrees"]) - 1)
+            # Modifier valeur
+            data["entrees"][i]["formes"] = 45
+
+            self.save_data(data)
+            assert self.launchAndReturnCode() == 1
+            self.restore_original_dict()
+            data = deepcopy(self.original_dict)
+
+        with subtests.test("Remplacement entrée - emotion"):
+            i = randint(0, len(data["entrees"]) - 1)
+            data["entrees"][i]["emotion"] = 45
+
+            self.save_data(data)
+            assert self.launchAndReturnCode() == 1
+            self.restore_original_dict()
+            data = deepcopy(self.original_dict)
+        
+        with subtests.test("Remplacement entrée - intensite"):
+            i = randint(0, len(data["entrees"]) - 1)
+            data["entrees"][i]["intensite"] = 45
+            
+            self.save_data(data)
+            assert self.launchAndReturnCode() == 1
+            self.restore_original_dict()
+            data = deepcopy(self.original_dict)
+    
+    @pytest.mark.parametrize(["i1", "i2"], [(0, 1) for i in range(10)])
+    def test_coherence(self, subtests : pytest.Subtests, i1, i2):
+        # Capture du dictionnaire original
+        self.save_original_dict()
+
+        # Données à travailler
+        data: dict = deepcopy(self.original_dict)
+        
+        # Test invalidités
+        with subtests.test("Test émotion invalide"):
+            i1 = randint(0, len(data["entrees"]) - 1)
+            data["entrees"][i1]["emotion"] = "bigleur"
+
+            self.save_data(data)
+            assert self.launchAndReturnCode() == 1
+            self.restore_original_dict()
+            data = deepcopy(self.original_dict)
+        
+        with subtests.test("Test intensité invalide"):
+            i1 = randint(0, len(data["entrees"]) - 1)
+            data["entrees"][i1]["intensite"] = "spritante"
+
+            self.save_data(data)
+            assert self.launchAndReturnCode() == 1
+            self.restore_original_dict()
+            data = deepcopy(self.original_dict)
+        
+        # Test unicité
+        with subtests.test("Test unicité"):
+            i1 = randint(0, len(data["entrees"]) - 1)
+            i2: int = randint(0, len(data["entrees"]) - 1)
+            while (i2 == i1):
+                i2 = randint(0, len(data["entrees"]) - 1)
+
+            data["entrees"][i1]["formes"] = data["entrees"][i2]["formes"]
+
+            self.save_data(data)
+            assert self.launchAndReturnCode() == 1
+            self.restore_original_dict()
+            data = deepcopy(self.original_dict)
