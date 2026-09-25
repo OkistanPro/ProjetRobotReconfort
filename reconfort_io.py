@@ -294,17 +294,17 @@ def charger_carte(chemin: str | Path) -> Dict[str, Any]:
         # Vérifier position résident selon dimensions
         if not (0 <= resident["position"][0] < hauteur) or \
         not (0 <= resident["position"][1] < largeur):
-            print(f"Erreur chargement carte : Position résident {resident["id"]} dépasse la grille", file=stderr)
+            print(f"Erreur chargement carte : Position résident {resident['id']} dépasse la grille", file=stderr)
             exit(1)
 
         # Vérifier posiion résident dans la grille
         if dict_carte["grille"][resident["position"][0]][resident["position"][1]] != 'P':
-            print(f"Erreur chargement carte : Position résident {resident["id"]} invalide selon grille", file=stderr)
+            print(f"Erreur chargement carte : Position résident {resident['id']} invalide selon grille", file=stderr)
             exit(1)
         
         # Unicité de l'identifiant
         if resident["id"] in id_residents:
-            print(f"Erreur chargement carte : Résident {resident["id"]} non unique.", file=stderr)
+            print(f"Erreur chargement carte : Résident {resident['id']} non unique.", file=stderr)
             exit(1)
         
         id_residents.append(resident["id"])
