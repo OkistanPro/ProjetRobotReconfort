@@ -1,6 +1,6 @@
 class Dictionnaire:
     position_carte : tuple[int, int]
-    contenu : dict[str, tuple[int, int]]
+    contenu : dict[str, tuple[int, int]] = {}
 
     def __init__(self, position_carte : tuple[int, int], dico : dict):
         self.position_carte = position_carte
