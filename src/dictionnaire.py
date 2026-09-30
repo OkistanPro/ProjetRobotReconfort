@@ -6,12 +6,13 @@ class Dictionnaire:
         self.position_carte = position_carte
         # On suppose que le dico est de la même forme que dictionnaire.json
         for entree in dico["entrees"]:
-            emotion : int = dico["emotions"].find(entree["emotion"])
-            intensite : int = dico["intensites"].find(entree["intensite"])
+            emotion : int = dico["emotions"].index(entree["emotion"])
+            intensite : int = dico["intensites"].index(entree["intensite"])
 
             for forme in entree["formes"]:
                 self.contenu[forme] = (emotion, intensite)
     
 
-    def getEmotionIntensite(self, key : str) -> tuple[int, int]: 
+    def getEmotionIntensite(self, key : str) -> tuple[int, int]:
+        if key not in self.contenu : return None
         return self.contenu[key]
