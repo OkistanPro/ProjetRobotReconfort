@@ -20,12 +20,16 @@ manquantes font partie du travail demande.
 Python 3.9+. Aucune dependance externe.
 """
 
+
 from __future__ import annotations
 
 import json
+from sys import stderr
 import unicodedata
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
+from sys import stderr
+
 
 __all__ = [
     "ErreurFichier",
@@ -51,7 +55,7 @@ class ErreurFichier(Exception):
 def _lire_json(chemin: str | Path, format_attendu: str) -> Dict[str, Any]:
     """Lit un fichier JSON UTF-8 et verifie son en-tete.
 
-    Ce qui EST verifie ici :
+    Ce qui EST verifie ici : 
       - le fichier existe et se lit en UTF-8 ;
       - son contenu est du JSON valide ;
       - la racine est un objet ;
@@ -107,23 +111,457 @@ def _lire_json(chemin: str | Path, format_attendu: str) -> Dict[str, Any]:
 
 
 def charger_carte(chemin: str | Path) -> Dict[str, Any]:
-    """Charge un fichier carte. Voir l'enonce, section 5.1."""
-    return _lire_json(chemin, "robot-reconfort/carte")
+    dict_carte = _lire_json(chemin, "robot-reconfort/carte")
+
+    # ----------------------
+    # Vérification existence
+    # ----------------------
+    
+    # Vérifier nom
+    if "nom" not in dict_carte:
+        print("Erreur chargement carte : L'appartement n'a pas de nom.", file=stderr)
+        exit(1)
+    
+    # Vérifier dimensions
+    if "dimensions" not in dict_carte:
+        print("Erreur chargement carte : L'appartement doit spécifier les dimensions", file=stderr)
+        exit(1)
+    
+    # Vérifier légende
+    if "legende" not in dict_carte:
+        print("Erreur chargement carte : Aucune légende définie.", file=stderr)
+        exit(1)
+    
+    # Vérifier existence grille
+    if "grille" not in dict_carte :
+        print("Erreur chargement carte : Aucune grille disponible.", file=stderr)
+        exit(1)
+    
+    # Vérifier existence position depart robot
+    if "depart_robot" not in dict_carte:
+        print("Erreur chargement carte : Aucune position de départ robot.", file=stderr)
+        exit(1)
+    
+    # Vérifier existence armoire
+    if "armoire" not in dict_carte:
+        print("Erreur chargement carte : Aucune armoire définie.", file=stderr)
+        exit(1)
+    
+    # Vérifier existence dictionnaire
+    if "dictionnaire" not in dict_carte:
+        print("Erreur chargement carte : Aucun dictionnaire défini.", file=stderr)
+        exit(1)
+    
+    # Vérifier existence résidents
+    if "residents" not in dict_carte:
+        print("Erreur chargement carte : Aucun résident défini.", file=stderr)
+        exit(1)
+    
+    # -----------------------------
+    # Vérification type des données
+    # -----------------------------
+
+    for key in dict_carte:
+        match key:
+            case "nom":
+                if type(dict_carte[key]) is not str:
+                    print(f"Erreur chargement carte : Type propriété {key} - str attendu.", file=stderr)
+                    exit(1)
+            case "dimensions":
+                if type(dict_carte[key]) is not dict:
+                    print(f"Erreur chargement carte : Type propriété {key} - Dict[String, int] attendu.", file=stderr)
+                    exit(1)
+            case "legende":
+                if type(dict_carte[key]) is not dict:
+                    print(f"Erreur chargement carte : Type propriété {key} - Dict[String, String] attendu.", file=stderr)
+                    exit(1)
+
+    # ------------------------------------------
+    # Vérification cohérence des données
+    # ------------------------------------------
+
+    # Vérifier nom vide
+    if dict_carte["nom"] == "":
+        print("Erreur chargement carte : Nom invalide", file=stderr)
+        exit(1)
+    
+    # Vérifier cohérence dimensions
+    if "largeur" not in dict_carte["dimensions"] or \
+    "hauteur" not in dict_carte["dimensions"] or \
+    dict_carte["dimensions"]["largeur"] <= 3 or \
+    dict_carte["dimensions"]["hauteur"] <= 3 :
+        print("Carte : Dimensions invalides.", file=stderr)
+        exit(1)
+    
+    signes = ["#", ".", "R", "A", "D", "P"]
+    # Vérifier légende
+    for signe in signes:
+        if signe not in dict_carte["legende"]:
+            print(f"Erreur chargement carte : Légende manquante - \"{signe}\"", file=stderr)
+            exit(1)
+    
+    largeur = dict_carte["dimensions"]["largeur"]
+    hauteur = dict_carte["dimensions"]["hauteur"]
+
+    # Vérifier cohérence grille/dimensions
+    if len(dict_carte["grille"]) != hauteur or \
+    False in [len(x) == largeur for x in dict_carte["grille"]]:
+        print("Erreur chargement carte : Dimensions grille invalide.", file=stderr)
+        exit(1)
+
+    # Vérifier données grille
+    nb_depart_robot = 0
+    nb_armoire = 0
+    nb_dict = 0
+    nb_residents = 0
+
+    for ligne in dict_carte["grille"]:
+        for c in ligne:
+            match c:
+                case "R":
+                    nb_depart_robot += 1
+                    if nb_depart_robot > 1:
+                        print("Erreur chargement carte : Plusieurs départs sur la grille.", file=stderr)
+                        exit(1)
+                case "A":
+                    nb_armoire += 1
+                    if nb_armoire > 1:
+                        print("Erreur chargement carte : Plusieurs armoires sur la grille.", file=stderr)
+                        exit(1)
+                case "D":
+                    nb_dict += 1
+                    if nb_dict > 1:
+                        print("Erreur chargement carte : Plusieurs dictionnaires sur la grille.", file=stderr)
+                        exit(1)
+                case "P":
+                    nb_residents += 1
+                case "#" | ".":
+                    pass
+                case _:
+                    print("Erreur chargement carte : Grille conient des caractères invalides.", file=stderr)
+                    exit(1)
+            
+    
+    # Vérifier position depart robot
+    if not (0 <= dict_carte["depart_robot"][0] < hauteur) or \
+    not (0 <= dict_carte["depart_robot"][1] < largeur):
+        print("Erreur chargement carte : Position départ du robot dépasse la grille", file=stderr)
+        exit(1)
+    
+    # Vérifier position armoire
+    if "position" not in dict_carte["armoire"]:
+        print("Erreur chargement carte : Pas de position d'armoire.", file=stderr)
+        exit(1)
+    if not (0 <= dict_carte["armoire"]["position"][0] < hauteur) or \
+    not (0 <= dict_carte["armoire"]["position"][1] < largeur):
+        print("Erreur chargement carte : Position armoire dépasse la grille", file=stderr)
+        exit(1)
+    
+    # Vérifier position dictionnaire
+    if "position" not in dict_carte["dictionnaire"]:
+        print("Erreur chargement carte : Pas de position de dictionnaire.", file=stderr)
+        exit(1)
+    if not (0 <= dict_carte["dictionnaire"]["position"][0] < hauteur) or \
+    not (0 <= dict_carte["dictionnaire"]["position"][1] < largeur):
+        print("Erreur chargement carte : Position dictionnaire dépasse la grille", file=stderr)
+        exit(1)
+    
+
+    # Vérifier chaque position dans la grille
+    if dict_carte["grille"][dict_carte["depart_robot"][0]][dict_carte["depart_robot"][1]] != 'R':
+        print("Erreur chargement carte : Position départ du robot invalide selon grille", file=stderr)
+        exit(1)
+    if dict_carte["grille"][dict_carte["armoire"]["position"][0]][dict_carte["armoire"]["position"][1]] != 'A':
+        print("Erreur chargement carte : Position armoire invalide selon grille", file=stderr)
+        exit(1)
+    if dict_carte["grille"][dict_carte["dictionnaire"]["position"][0]][dict_carte["dictionnaire"]["position"][1]] != 'D':
+        print("Erreur chargement carte : Position dictionnaire invalide selon grille", file=stderr)
+        exit(1)
+
+    # Vérifier nombre résidents
+    if len(dict_carte["residents"]) != nb_residents:
+        print("Erreur chargement carte : Incohérence nombre de résidents sur la grille.", file=stderr)
+        exit(1)
+    
+    # Pour chaque résident
+    id_residents = []
+    for resident in dict_carte["residents"]:
+        # Vérifier existence propriétés
+        if "id" not in resident or "nom" not in resident or "position" not in resident:
+            print("Erreur chargement carte : Données résidents invalides", file=stderr)
+            exit(1)
+        
+        # Vérifier position résident selon dimensions
+        if not (0 <= resident["position"][0] < hauteur) or \
+        not (0 <= resident["position"][1] < largeur):
+            print(f"Erreur chargement carte : Position résident {resident['id']} dépasse la grille", file=stderr)
+            exit(1)
+
+        # Vérifier posiion résident dans la grille
+        if dict_carte["grille"][resident["position"][0]][resident["position"][1]] != 'P':
+            print(f"Erreur chargement carte : Position résident {resident['id']} invalide selon grille", file=stderr)
+            exit(1)
+        
+        # Unicité de l'identifiant
+        if resident["id"] in id_residents:
+            print(f"Erreur chargement carte : Résident {resident['id']} non unique.", file=stderr)
+            exit(1)
+        
+        id_residents.append(resident["id"])
+
+    return dict_carte
 
 
 def charger_dictionnaire(chemin: str | Path) -> Dict[str, Any]:
-    """Charge un fichier dictionnaire. Voir l'enonce, section 5.2."""
-    return _lire_json(chemin, "robot-reconfort/dictionnaire")
+    dict_d = _lire_json(chemin, "robot-reconfort/dictionnaire")
+    # ----------------------
+    # Vérification existence
+    # ----------------------
+    if "nom" not in dict_d:
+        print("Erreur chargement dictionnaire : Dictionnaire sans nom.", file=stderr)
+        exit(1)
+    
+    if "emotions" not in dict_d:
+        print("Erreur chargement dictionnaire : Emotions manquantes.", file=stderr)
+        exit(1)
+    
+    if "intensites" not in dict_d:
+        print("Erreur chargement dictionnaire : Intensités manquantes.", file=stderr)
+        exit(1)
+
+    if "entrees" not in dict_d:
+        print("Erreur chargement dictionnaire : Aucune entrée dans dictionnaire.", file=stderr)
+        exit(1)
+
+    # ------------------------------------------
+    # Vérification type et cohérence des données
+    # ------------------------------------------
+
+    # Type des émotions
+    if type(dict_d["emotions"]) is not list:
+        print("Erreur chargement dictionnaire : Emotions doit être list[str]", file=stderr)
+        exit(1)
+
+    # Type des intensités
+    if type(dict_d["intensites"]) is not list:
+        print("Erreur chargement dictionnaire : Intensités doit être list[str]", file=stderr)
+        exit(1)
+    
+    # Type des entrées
+    if type(dict_d["entrees"]) is not list:
+        print("Erreur chargement dictionnaire : Entrées doit être liste d'objets", file=stderr)
+        exit(1)
+
+    list_formes: list[str] = []
+
+    # Vérifier propriétés de chaque entrée
+    for i in range(len(dict_d["entrees"])):
+        if "formes" not in dict_d["entrees"][i] or type(dict_d["entrees"][i]["formes"]) is not list:
+            print(f"Erreur chargement dictionnaire : Entrée {i} - Formes - type invalide ou propriété non défini.", file=stderr)
+            exit(1)
+        
+        if "emotion" not in dict_d["entrees"][i] or type(dict_d["entrees"][i]["emotion"]) is not str:
+            print(f"Erreur chargement dictionnaire : Entrée {i} - émotion - type invalide ou propriété non défini.", file=stderr)
+            exit(1)
+        
+        if "intensite" not in dict_d["entrees"][i] or type(dict_d["entrees"][i]["intensite"]) is not str:
+            print(f"Erreur chargement dictionnaire : Entrée {i} - intensité - type invalide ou propriété non défini.", file=stderr)
+            exit(1)
+        
+        # Vérifier présence émotion et intensité
+        if dict_d["entrees"][i]["emotion"] not in dict_d["emotions"]:
+            print(f"Erreur chargement dictionnaire : Entrée {i} - émotion invalide.", file=stderr)
+            exit(1)
+        
+        if dict_d["entrees"][i]["intensite"] not in dict_d["intensites"]:
+            print(f"Erreur chargement dictionnaire : Entrée {i} - intensité invalide.", file=stderr)
+            exit(1)
+        
+        # Vérifier unicité formes
+        for forme in dict_d["entrees"][i]["formes"]:
+            if forme in list_formes:
+                print(f"Erreur chargement dictionnaire : Entrée {i} - forme \"{forme}\" existe dans une autre entrée.", file=stderr)
+                exit(1)
+            list_formes.append(forme)
+
+    return dict_d
 
 
 def charger_armoire(chemin: str | Path) -> Dict[str, Any]:
-    """Charge un fichier armoire. Voir l'enonce, section 5.3."""
-    return _lire_json(chemin, "robot-reconfort/armoire")
+    dict_armoire = _lire_json(chemin, "robot-reconfort/armoire")
+    
+    # ----------------------
+    # Vérification existence
+    # ----------------------
+    
+    # Vérifier nom
+    if "nom" not in dict_armoire:
+        print("Erreur chargement armoire : L'armoire n'a pas de nom.", file=stderr)
+        exit(1)
+        
+    # Vérifier existence des émotions
+    if "emotions" not in dict_armoire:
+        print("Erreur chargement armoire : L'armoire n'a pas de liste d'émotions.", file=stderr)
+        exit(1)
+        
+    # Vérifier existence des intensités
+    if "intensites" not in dict_armoire:
+        print("Erreur chargement armoire : L'armoire n'a pas de liste d'intensités.", file=stderr)
+        exit(1)
+        
+    # Vérifier la position du casier de départ
+    if "casier_depart" not in dict_armoire:
+        print("Erreur chargement armoire : L'armoire n'a pas de position de casier de départ.", file=stderr)
+        exit(1)
+    
+    # Vérifier existence des casiers
+    if "casiers" not in dict_armoire:
+        print("Erreur chargement armoire : L'armoire n'a pas de liste de casiers.", file=stderr)
+        exit(1)
+    
+    # ------------------------------------------
+    # Vérification type et cohérence des données
+    # ------------------------------------------
+    
+    # Vérifier nom vide
+    if dict_armoire["nom"] == "":
+        print("Erreur chargement armoire : Nom invalide.", file=stderr)
+        exit(1)
+        
+    # Vérifier que les émotions sont les bonnes, et dans le bon ordre
+    emotions_attendues = [
+    "joie",
+    "confiance",
+    "peur",
+    "surprise",
+    "tristesse",
+    "degout",
+    "colere",
+    "anticipation"
+  ]
+    if dict_armoire["emotions"] != emotions_attendues:
+        print("Erreur chargement armoire : Liste d'émotions invalide.", file=stderr)
+        exit(1)
+    
+    # Vérifier que les intensités sont les bonnes, et dans le bon ordre
+    intensites_attendues = ["faible", "moyenne", "forte"]
+    if dict_armoire["intensites"] != intensites_attendues:
+        print("Erreur chargement armoire : Liste d'intensités invalide.", file=stderr)
+        exit(1)
+        
+    # Vérifier position du casier de départ
+    # L'armoire est une grille de taille 3x8
+    
+    if not (0 <= dict_armoire["casier_depart"][0] < 3) or \
+    not (0 <= dict_armoire["casier_depart"][1] < 8):
+        print("Erreur chargement armoire : Position du casier de départ en dehors de l'armoire", file=stderr)
+        exit(1)
+    
+    # Pour chaque casier
+    coordonnées_casiers = []
+    for i in range(len(dict_armoire["casiers"])):
+        casier = dict_armoire["casiers"][i]
+        ligne_casier = casier["ligne"]
+        colonne_casier = casier["colonne"]
+        # Vérifier existence propriétés
+        if "ligne" not in casier or "colonne" not in casier or "emotion" not in casier or "intensite" not in casier or "objet" not in casier:
+            print("Erreur chargement casier : Données casiers invalides", file=stderr)
+            exit(1)
+        
+        # Vérifier position casier
+        if not (0 <= ligne_casier < 3) or \
+        not (0 <= colonne_casier < 8):
+            print(f"Erreur chargement armoire : Position du casier n°{i} en dehors de l'armoire", file=stderr)
+            exit(1)
+
+        # Vérifier la correspondance entre la position du casier et son émotion/intensité
+        if (casier["intensite"], casier["emotion"]) != (intensites_attendues[ligne_casier], emotions_attendues[colonne_casier]):
+            print(f"Erreur chargement armoire : L'émotion/intensité de l'objet du casier n°{i} ne correspond pas à sa position.", file=stderr)
+            exit(1)
+        
+         # Vérifier que l'objet n'est pas vide
+        if casier["objet"] == "":
+            print(f"Erreur chargement armoire : L'objet du casier n°{i} est vide.", file=stderr)
+            exit(1)
+        
+        # Vérifier qu'il n'y a pas de casier en double
+        if (ligne_casier, colonne_casier) in coordonnées_casiers:
+            print(f"Erreur chargement armoire : Le casier n°{i} est en double.", file=stderr)
+            exit(1)
+        
+        coordonnées_casiers.append((ligne_casier, colonne_casier))
+    
+    return dict_armoire
 
 
 def charger_scenario(chemin: str | Path) -> Dict[str, Any]:
-    """Charge un fichier scenario. Voir l'enonce, section 5.4."""
-    return _lire_json(chemin, "robot-reconfort/scenario")
+    dict_scenario = _lire_json(chemin, "robot-reconfort/scenario")
+
+    # ----------------------
+    # Vérification existence
+    # ----------------------
+    
+    # Vérifier nom
+    if "nom" not in dict_scenario:
+        print("Erreur chargement scenario : Le scenario n'a pas de nom.", file=stderr)
+        exit(1)
+        
+    # Vérifier carte
+    if "carte" not in dict_scenario:
+        print("Erreur chargement scenario : Le scenario n'a pas de carte.", file=stderr)
+        exit(1)
+        
+    # Vérifier armoire
+    if "armoire" not in dict_scenario:
+        print("Erreur chargement scenario : Le scenario n'a pas d'armoire.", file=stderr)
+        exit(1)
+        
+    # Vérifier demandes
+    if "demandes" not in dict_scenario:
+        print("Erreur chargement scenario : Le scenario n'a pas de demandes.", file=stderr)
+        exit(1)
+        
+    # ------------------------------------------
+    # Vérification type et cohérence des données
+    # ------------------------------------------
+    
+    # Vérifier nom vide
+    if dict_scenario["nom"] == "":
+        print("Erreur chargement scenario : Nom invalide.", file=stderr)
+        exit(1)
+        
+    # Vérifier carte vide
+    if dict_scenario["carte"] == "":
+        print("Erreur chargement scenario : Carte invalide.", file=stderr)
+        exit(1)
+        
+    # Vérifier armoire vide
+    if dict_scenario["armoire"] == "":
+        print("Erreur chargement scenario : Armoire invalide.", file=stderr)
+        exit(1) 
+        
+    # Pour chaque demande
+    for i in range(len(dict_scenario["demandes"])):
+        demande = dict_scenario["demandes"][i]
+        # Vérifier existence propriétés
+        if "numero" not in demande or "resident" not in demande or "message" not in demande:
+            print("Erreur chargement scenario : Données demandes invalides", file=stderr)
+            exit(1)
+        
+        # Vérifier que les numéros des demandes correspondent
+        if demande["numero"] != i+1:
+            print("Erreur chargement scenario : Numérotation des demandes invalide", file=stderr)
+            exit(1)
+        # Vérifier que le résident n'est pas vide
+        if demande["resident"] == "":
+            print(f"Erreur chargement scenario : Le résident de la demande n°{i+1} est vide.", file=stderr)
+            exit(1)
+        # Vérifier que le message n'est pas vide
+        if demande["message"] == "":
+            print(f"Erreur chargement scenario : Le message de la demande n°{i+1} est vide.", file=stderr)
+            exit(1)
+        
+    return dict_scenario
 
 
 # ---------------------------------------------------------------------------
