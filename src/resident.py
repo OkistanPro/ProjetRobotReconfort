@@ -3,7 +3,7 @@ class Resident:
     nom : str
     position : tuple[int, int]
 
-    def Resident(self, id, nom, position):
+    def __init__(self, id, nom, position):
         self.id = id
         self.nom = nom
         self.position = position
