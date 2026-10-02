@@ -2,13 +2,13 @@ from typing import Any
 from src.e_mouvement import MOUVEMENT
 
 class Armoire:
-    position_carte: tuple[int, int]
+    position: tuple[int, int]
     curseur: list[int, int]
     en_utilisation: bool
     casiers: list[list[str]]
 
     def __init__(self, position_carte: tuple[int, int], curseur_depart: list[int, int], casiers: list[dict[str, Any]]):
-        self.position_carte = position_carte
+        self.position = position_carte
         self.curseur = curseur_depart
         self.en_utilisation = False
         # On suppose casiers même forme que dans armoire_standard.json
