@@ -1,0 +1,145 @@
+@startuml
+left to right direction
+class Monde {
+- carte : CarteMonde
+- agents : Array[Robot]
+- armoire : Armoire
+- dico : Dictionnaire
+- residents : Dict[Tuple[int, int], Resident]
+- scenario : Scenario
++ emotions : Array[String]
++ intensites : Array[String]
+
++ Monde(\n\tpath_carte : String,\n\tpath_dico : String,\n\tpath_armoire : String,\n\tpath_scenario : String,\n\tnb_robots : String\n\t)
+}
+
+abstract Carte {
++ dimensions : Tuple[int, int]
+- grille : Array[Array[String]]
+{abstract} afficher_carte() : void
+}
+
+class CarteMonde {
++ getCase(pos : Tuple[int, int], adj : MOVEMENT) : String
++ afficher_carte() : void
+}
+
+note left of CarteMonde {
+Mise à jour de la grille 
+au mouvement du/des robots
+}
+
+
+class CarteMentale {
++ saveCases(cases : Dict[String, CASES])
++ calcul_chemin(depart, arrivees, est_traversable)
++ afficher_carte() : void
+}
+
+note right of CarteMentale {
+N : case, O : case, S : case, E : case
+}
+
+class Robot {
+- position_carte : Tuple[int ,int]
+- armoire_mentale : Array[Array[String]]
+- carte_mentale : CarteMentale
+- etat : ETATS
+- target_resident : Resident
+- inventaire : String
+- liste_casier_recherche : Array[Tuple[int, int]]
+- perception : Dict[str, str]
+- contenu_casier : String
+- actions : Array[ACTIONS]
+
+- AVANCER(pos : MOVEMENT)
+- CONSULTER()
+- CHERCHER(pos : MOVEMENT)
+- PRENDRE()
+- DONNER()
+
++ PERCEVOIR(monde : Monde)
++ MEMORISER()
++ DECISION()
++ ACTION()
+
+- deplacer_vers(pos : Tuple[int ,int])
+}
+
+enum ETATS {
+IDLE
+MOVING_DICO
+MOVING_ARMOIRE
+MOVING_RESIDENT
+FINDING_OBJET
+}
+
+enum ACTIONS {
+AVANCER
+CONSULTER
+CHERCHER
+PRENDRE
+DONNER
+ATTENDRE
+}
+
+
+class Armoire {
+- position_carte : Tuple[int ,int]
+- curseur : Tuple[int, int]
+- en_utilisation : bool
+- casiers : Array[Array[String]]
+
++ deplacer_curseur(direction : MOVEMENT)
+}
+
+note bottom of Armoire {
+Casier est une matrice 
++ gestion déplacement via fonction avec modulo
+}
+
+enum MOVEMENT {
+N
+S
+O
+E
+}
+
+class Dictionnaire {
+- position_carte : Tuple[int ,int]
++ contenu : Dict[String, Tuple[int, int]]
+}
+
+
+class Resident {
++ id : String
++ nom : String
++ position : Tuple[int, int]
+}
+
+class Scenario {
+- i : int
+- demandes : Dict[String, String]
+
++ nextDemande() -> Dict[String, String] or None
+}
+
+Carte <|-- CarteMonde
+Carte <|-- CarteMentale
+
+Robot -- ETATS
+Robot -- ACTIONS
+Robot -- MOVEMENT
+Armoire -- MOVEMENT
+
+Monde *-- Robot
+Monde *-- Armoire
+Monde *-- Dictionnaire
+Monde *-- Scenario
+Monde *-- Resident
+Monde *-- CarteMonde
+
+Robot *-- CarteMentale
+Robot o-r- Resident
+
+@enduml
