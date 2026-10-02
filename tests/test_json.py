@@ -351,15 +351,6 @@ class TestJSONChargerDict:
     def launchAndReturnCode(self):
         process = subprocess.run(["python", "./demo.py", "cartes/appartement_test.json", "cartes/scenario_01.json", "donnees", "sortie.json"])
         return process.returncode
-    
-    def errortest(self, data):
-        self.save_data(data)
-        # Erreur
-        assert self.launchAndReturnCode() == 1
-        # Remettre le fichier original
-        self.restore_original_dict()
-        # Données recopiées
-        data = deepcopy(self.original_dict)
 
     def test_ok(self):
         assert self.launchAndReturnCode() == 0
