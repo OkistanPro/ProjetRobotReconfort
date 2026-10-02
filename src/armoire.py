@@ -20,10 +20,10 @@ class Armoire:
         if self.en_utilisation:
             match mov:
                 case MOUVEMENT.N:
-                    self.curseur[1] = max(0, self.curseur[1] - 1)
+                    self.curseur[0] = max(0, self.curseur[0] - 1)
                 case MOUVEMENT.S:
-                    self.curseur[1] = min(2, self.curseur[1] + 1)
+                    self.curseur[0] = min(2, self.curseur[0] + 1)
                 case MOUVEMENT.O:
-                    self.curseur[0] = (self.curseur[0] - 1) % 8
+                    self.curseur[1] = (self.curseur[1] - 1) % 8
                 case MOUVEMENT.E:
-                    self.curseur[0] = (self.curseur[0] + 1) % 8
+                    self.curseur[1] = (self.curseur[1] + 1) % 8
