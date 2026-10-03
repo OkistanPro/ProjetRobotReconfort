@@ -1,3 +1,5 @@
+from colorama import Style
+from colorama import Fore
 from e_mouvement import MOUVEMENT
 from carte import Carte
 from collections import deque
@@ -63,8 +65,8 @@ class CarteMentale(Carte):
             if courant[1] < self.dimensions[1] - 1 : voisins.append((courant[0], courant[1] + 1))
 
             for voisin in voisins:
-                if voisin in predecesseur : next
-                if self.grille[voisin[0]][voisin[1]] != ".": next
+                if voisin in predecesseur : continue
+                if self.grille[voisin[0]][voisin[1]] != ".": continue
                 predecesseur[voisin] = courant
                 if voisin in arrivees:
                     return self.reconstruire(predecesseur, voisin)
@@ -72,20 +74,24 @@ class CarteMentale(Carte):
         
         return None
     
-    def afficher_carte(self):
-        print(self.grille)
-
-test_carte = CarteMentale((9, 13), [[6, 1]], [[6, 11], [3, 3]], (6, 4), (7, 6))
-test_carte.grille = [
-    "#############",
-    "#......#....#",
-    "#...........#",
-    "#..P...#....#",
-    "#.#########.#",
-    "#......#....#",
-    "#R..A..#...P#",
-    "#.....D#....#",
-    "#############"
-  ]
-
-print(test_carte.calcul_chemin((6, 1), [(3, 4)]))
+    def afficher_carte(self, chemin=None):
+        for ligne in range(len(self.grille)):
+            for colonne in range(len(self.grille[ligne])):
+                if chemin and (ligne, colonne) in chemin:
+                    match self.grille[ligne][colonne]:
+                        case "#":
+                            print(Fore.CYAN + "█" + Style.RESET_ALL, end="")
+                        case ".":
+                            print(Fore.CYAN + "░" + Style.RESET_ALL, end="")
+                        case _:
+                            print(Fore.CYAN + self.grille[ligne][colonne] + Style.RESET_ALL, end="")
+                    
+                else:
+                    match self.grille[ligne][colonne]:
+                        case "#":
+                            print("█", end="")
+                        case ".":
+                            print("░", end="")
+                        case _:
+                            print(self.grille[ligne][colonne], end="")
+            print("")
