@@ -41,16 +41,24 @@ class CarteMentale(Carte):
             match direction:
                 case "N":
                     if position_robot[0] > 0:
-                        self.grille[position_robot[0] - 1][position_robot[1]] = cases[direction]
+                        ligne: list[str] = list(self.grille[position_robot[0] - 1])
+                        ligne[position_robot[1]] = cases[direction]
+                        self.grille[position_robot[0] - 1] = "".join(ligne)
                 case "S":
                     if position_robot[0] < self.dimensions[0] - 1:
-                        self.grille[position_robot[0] + 1][position_robot[1]] = cases[direction]
+                        ligne: list[str] = list(self.grille[position_robot[0] + 1])
+                        ligne[position_robot[1]] = cases[direction]
+                        self.grille[position_robot[0] + 1] = "".join(ligne)
                 case "O":
                     if position_robot[1] > 0:
-                        self.grille[position_robot[0]][position_robot[1] - 1] = cases[direction]
+                        ligne: list[str] = list(self.grille[position_robot[0]])
+                        ligne[position_robot[1] - 1] = cases[direction]
+                        self.grille[position_robot[0]] = "".join(ligne)
                 case "E":
                     if position_robot[1] < self.dimensions[1] - 1:
-                        self.grille[position_robot[0]][position_robot[1] + 1] = cases[direction]
+                        ligne: list[str] = list(self.grille[position_robot[0]])
+                        ligne[position_robot[1] + 1] = cases[direction]
+                        self.grille[position_robot[0]] = "".join(ligne)
                     
     
     def reconstruire(self, predecesseur : dict[tuple[int, int], tuple[int, int]], case : tuple[int, int]):
@@ -107,6 +115,3 @@ class CarteMentale(Carte):
                         case _:
                             print(self.grille[ligne][colonne], end="")
             print("")
-
-test_carte = CarteMentale((9, 13), [[6, 1]], [[6, 11], [3, 3]], (6, 4), (7, 6))
-test_carte.afficher_carte(test_carte.calcul_chemin((6, 1), [(6, 12), (6, 10), (5, 11), (7, 11)]))
