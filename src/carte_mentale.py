@@ -14,14 +14,26 @@ class CarteMentale(Carte):
         position_dictionnaire : tuple[int, int]
     ):
         self.dimensions = dimensions
-        self.grille = [["."]*self.dimensions[1]]*self.dimensions[0]
+        self.grille = ["."*self.dimensions[1]]*self.dimensions[0]
+
         # Placement des positions
         for pos_robot in positions_robots:
-            self.grille[pos_robot[0]][pos_robot[1]] = "R"
+            ligne = list(self.grille[pos_robot[0]])
+            ligne[pos_robot[1]] = "R"
+            self.grille[pos_robot[0]] = "".join(ligne)
+
         for pos_resident in positions_residents:
-            self.grille[pos_resident[0]][pos_resident[1]] = "P"
-        self.grille[position_armoire[0]][position_armoire[1]] = "A"
-        self.grille[position_dictionnaire[0]][position_dictionnaire[1]] = "D"
+            ligne = list(self.grille[pos_resident[0]])
+            ligne[pos_resident[1]] = "P"
+            self.grille[pos_resident[0]] = "".join(ligne)
+
+        ligne_armoire = list(self.grille[position_armoire[0]])
+        ligne_armoire[position_armoire[1]] = "A"
+        self.grille[position_armoire[0]] = "".join(ligne_armoire)
+
+        ligne_dico = list(self.grille[position_dictionnaire[0]])
+        ligne_dico[position_dictionnaire[1]] = "D"
+        self.grille[position_dictionnaire[0]] = "".join(ligne_dico)
     
     def saveCases(self, position_robot : tuple[int, int], cases : dict[str, str]):
         # De la forme {"N": case, "O" : case, "E" : case, "S" : case}
@@ -95,3 +107,6 @@ class CarteMentale(Carte):
                         case _:
                             print(self.grille[ligne][colonne], end="")
             print("")
+
+test_carte = CarteMentale((9, 13), [[6, 1]], [[6, 11], [3, 3]], (6, 4), (7, 6))
+test_carte.afficher_carte(test_carte.calcul_chemin((6, 1), [(6, 12), (6, 10), (5, 11), (7, 11)]))
