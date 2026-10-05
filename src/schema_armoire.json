@@ -1,0 +1,82 @@
+{
+    "title" : "schema dictionnaire",
+    "type" : "object",
+    "required": [ "format", "version", "nom", "emotions", "intensites", "casier_depart", "casiers"],
+    "properties": {
+        "format": {
+            "type": "string"
+        },
+        "version": {
+            "type": "integer"
+        },
+        "nom": {
+            "type": "string",
+            "minLength": 1
+        },
+        "emotions": {
+            "type": "array",
+            "prefixItems": [
+                { "const": "joie" },
+                { "const": "confiance" },
+                { "const": "peur" },
+                { "const": "surprise" },
+                { "const": "tristesse" },
+                { "const": "degout" },
+                { "const": "colere" },
+                { "const": "anticipation" }
+            ],
+            "items": false,
+            "minItems": 8
+        },
+        "intensites": {
+            "type": "array",
+            "prefixItems": [
+                { "const": "faible" },
+                { "const": "moyenne" },
+                { "const": "forte" }
+            ],
+            "items": false,
+            "minItems": 3
+        },
+        "casier_depart": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+                "type": "integer",
+                "minimum": 0
+            }
+        },
+        "casiers": {
+            "type" : "array",
+            "minItems": 24,
+            "maxItems": 24,
+            "items": {
+                "type": "object",
+                "required": ["ligne","colonne","emotion", "intensite", "objet"],
+                "properties": {
+                    "ligne": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 2
+                    },
+                    "colonne": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 7
+                    },
+                    "emotion": {
+                        "enum": ["joie", "confiance", "peur", "surprise", "tristesse", "degout", "colere", "anticipation"]
+                    },
+                    "intensite": {
+                        "enum": ["faible", "moyenne", "forte"]
+                    },
+                    "objet": {
+                        "type": ["string", null],
+                        "minLength": 1
+                    }
+                }
+            }
+        }
+    }
+}
