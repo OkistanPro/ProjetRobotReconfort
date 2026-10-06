@@ -1,0 +1,66 @@
+{
+    "title" : "schema dictionnaire",
+    "type" : "object",
+    "required": [ "format", "version", "nom", "emotions", "intensites", "entrees"],
+    "properties": {
+        "format": {
+            "type": "string"
+        },
+        "version": {
+            "type": "integer"
+        },
+        "nom": {
+            "type": "string",
+            "minLength": 1
+        },
+        "emotions": {
+            "type": "array",
+            "prefixItems": [
+                { "const": "joie" },
+                { "const": "confiance" },
+                { "const": "peur" },
+                { "const": "surprise" },
+                { "const": "tristesse" },
+                { "const": "degout" },
+                { "const": "colere" },
+                { "const": "anticipation" }
+            ],
+            "items": false,
+            "minItems": 8
+        },
+        "intensites": {
+            "type": "array",
+            "prefixItems": [
+                { "const": "faible" },
+                { "const": "moyenne" },
+                { "const": "forte" }
+            ],
+            "items": false,
+            "minItems": 3
+        },
+        "entrees": {
+            "type" : "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "required": ["formes","emotion","intensite"],
+                "properties": {
+                    "formes": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                            "type": "string",
+                            "minLength" : 1
+                        }
+                    },
+                    "emotion": {
+                        "enum": ["joie", "confiance", "peur", "surprise", "tristesse", "degout", "colere", "anticipation"]
+                    },
+                    "intensite": {
+                        "enum": ["faible", "moyenne", "forte"]
+                    }
+                }
+            }
+        }
+    }
+}
