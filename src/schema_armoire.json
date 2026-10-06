@@ -72,7 +72,7 @@
                         "enum": ["faible", "moyenne", "forte"]
                     },
                     "objet": {
-                        "type": ["string", null],
+                        "type": ["string", "null"],
                         "minLength": 1
                     }
                 }
