@@ -53,10 +53,10 @@
                             "minLength" : 1
                         }
                     },
-                    "emotions": {
+                    "emotion": {
                         "enum": ["joie", "confiance", "peur", "surprise", "tristesse", "degout", "colere", "anticipation"]
                     },
-                    "intensites": {
+                    "intensite": {
                         "enum": ["faible", "moyenne", "forte"]
                     }
                 }
