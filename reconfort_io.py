@@ -300,16 +300,16 @@ def charger_armoire(chemin: str | Path) -> Dict[str, Any]:
     
     # Pour chaque casier
     
-        emotions_attendues = [
-    "joie",
-    "confiance",
-    "peur",
-    "surprise",
-    "tristesse",
-    "degout",
-    "colere",
-    "anticipation"
-  ]
+    emotions_attendues = [
+        "joie",
+        "confiance",
+        "peur",
+        "surprise",
+        "tristesse",
+        "degout",
+        "colere",
+        "anticipation"
+    ]
     intensites_attendues = [
     "faible",
     "moyenne",
