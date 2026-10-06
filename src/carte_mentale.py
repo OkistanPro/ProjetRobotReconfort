@@ -1,7 +1,7 @@
 from colorama import Style
 from colorama import Fore
-from e_mouvement import MOUVEMENT
-from carte import Carte
+from src.e_mouvement import MOUVEMENT
+from src.carte import Carte
 from collections import deque
 
 class CarteMentale(Carte):

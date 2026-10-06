@@ -1,5 +1,5 @@
-from carte import Carte, Fore, Style
-from e_mouvement import MOUVEMENT
+from src.carte import Carte, Fore, Style
+from src.e_mouvement import MOUVEMENT
 
 class CarteMonde (Carte):
     def __init__(self, dimensions, grille):

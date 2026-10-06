@@ -3,7 +3,7 @@ class Scenario:
     ind_demande : int
     demandes : list[dict[str, str]] = []
 
-    def __init__(self, *, dico : dict[str, Any]=None):
+    def __init__(self, dico : dict[str, Any]=None):
         self.ind_demande = -1
         # On suppose que le dico est de la même forme que scenario.json
         for demande in dico["demandes"]:
