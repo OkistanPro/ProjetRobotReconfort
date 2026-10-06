@@ -125,8 +125,7 @@ def charger_carte(chemin: str | Path) -> Dict[str, Any]:
     validator = Draft202012Validator(schema)
     errors = sorted(validator.iter_errors(dict_carte), key=lambda e: e.path)
     for error in errors:
-        for suberror in sorted(error.context, key=lambda e: e.schema_path):
-            print(list(suberror.schema_path), suberror.message, sep=", ", file=stderr)
+        print(error.message, file=stderr)
         exit(1)
 
     # ------------------------------------------
@@ -248,8 +247,7 @@ def charger_dictionnaire(chemin: str | Path) -> Dict[str, Any]:
     validator = Draft202012Validator(schema)
     errors = sorted(validator.iter_errors(dict_d), key=lambda e: e.path)
     for error in errors:
-        for suberror in sorted(error.context, key=lambda e: e.schema_path):
-            print(list(suberror.schema_path), suberror.message, sep=", ", file=stderr)
+        print(error.message, file=stderr)
         exit(1)
         
     # ------------------------------------------
@@ -282,8 +280,7 @@ def charger_armoire(chemin: str | Path) -> Dict[str, Any]:
     validator = Draft202012Validator(schema)
     errors = sorted(validator.iter_errors(dict_armoire), key=lambda e: e.path)
     for error in errors:
-        for suberror in sorted(error.context, key=lambda e: e.schema_path):
-            print(list(suberror.schema_path), suberror.message, sep=", ", file=stderr)
+        print(error.message, file=stderr)
         exit(1)
     
     # ------------------------------------------
@@ -351,8 +348,7 @@ def charger_scenario(chemin: str | Path) -> Dict[str, Any]:
     validator = Draft202012Validator(schema)
     errors = sorted(validator.iter_errors(dict_scenario), key=lambda e: e.path)
     for error in errors:
-        for suberror in sorted(error.context, key=lambda e: e.schema_path):
-            print(list(suberror.schema_path), suberror.message, sep=", ", file=stderr)
+        print(error.message, file=stderr)
         exit(1)
         
     # ------------------------------------------
