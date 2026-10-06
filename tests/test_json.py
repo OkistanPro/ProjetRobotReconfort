@@ -1,3 +1,4 @@
+import sys
 from io import TextIOWrapper
 from random import randint
 from copy import deepcopy
@@ -16,7 +17,7 @@ class TestJSONChargerCarte:
             json.dump(data, file_write)
     
     def launchAndReturnCode(self):
-        process = subprocess.run(["python", "./demo.py", "tests/tmpappart.json", "cartes/scenario_01.json", "donnees", "sortie.json"])
+        process = subprocess.run([sys.executable, "./demo.py", "tests/tmpappart.json", "cartes/scenario_01.json", "donnees", "sortie.json"])
         os.remove("tests/tmpappart.json")
         return process.returncode
         
@@ -349,7 +350,7 @@ class TestJSONChargerDict:
             json.dump(data, file_write)
         
     def launchAndReturnCode(self):
-        process = subprocess.run(["python", "./demo.py", "cartes/appartement_test.json", "cartes/scenario_01.json", "donnees", "sortie.json"])
+        process = subprocess.run([sys.executable, "./demo.py", "cartes/appartement_test.json", "cartes/scenario_01.json", "donnees", "sortie.json"])
         return process.returncode
 
     def test_ok(self):
