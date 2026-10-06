@@ -1,0 +1,47 @@
+{
+    "title" : "schema dictionnaire",
+    "type" : "object",
+    "required": [ "format", "version", "nom", "carte", "armoire", "demandes"],
+    "properties": {
+        "format": {
+            "type": "string"
+        },
+        "version": {
+            "type": "integer"
+        },
+        "nom": {
+            "type": "string",
+            "minLength": 1
+        },
+        "carte": {
+            "type": "string",
+            "minLength": 1
+        },
+        "armoire": {
+            "type": "string",
+            "minLength": 1
+        },
+        "demandes": {
+            "type" : "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "required": ["numero","resident","message"],
+                "properties": {
+                    "numero": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "resident": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "message": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                }
+            }
+        }
+    }
+}
