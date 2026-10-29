@@ -14,7 +14,8 @@ class CarteMentale(Carte):
         position_dictionnaire : tuple[int, int]
     ):
         self.dimensions = dimensions
-        self.grille = ["."*self.dimensions[1]]*self.dimensions[0]
+        for i in range(self.dimensions[0]) :
+            self.grille.append(["."]*self.dimensions[1])
 
         # Placement des positions
         for pos_robot in positions_robots:
