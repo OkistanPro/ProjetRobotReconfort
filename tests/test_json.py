@@ -469,3 +469,255 @@ class TestJSONChargerDict:
             assert self.launchAndReturnCode() == 1
             self.restore_original_dict()
             data = deepcopy(self.original_dict)
+        
+class TestJSONChargerArmoire:
+    original_dict : dict
+    
+    def save_original_dict(self):
+        file = open("donnees/armoire_standard.json", "r", encoding="utf-8")
+        self.original_dict = json.load(file)
+    
+    def restore_original_dict(self):
+        with open("donnees/armoire_standard.json", "w", encoding="utf-8") as file_write:
+            json.dump(self.original_dict, file_write, indent=2)
+        
+    def save_data(self, data):
+        with open("donnees/armoire_standard.json", "w", encoding="utf-8") as file_write:
+            json.dump(data, file_write)
+        
+    def launchAndReturnCode(self):
+        process = subprocess.run([sys.executable, "./demo.py", "cartes/appartement_test.json", "cartes/scenario_01.json", "donnees", "sortie.json"])
+        return process.returncode
+    
+    def test_ok(self):
+        assert self.launchAndReturnCode() == 0
+    
+    def test_existence(self, subtests : pytest.Subtests):
+        # Capture du dictionnaire original
+        self.save_original_dict()
+
+        # Données à travailler
+        data: dict = deepcopy(self.original_dict)
+
+        # Pour chaque propriété
+        for prop in self.original_dict.keys():
+            with subtests.test("Existence " + prop, prop=prop):
+                # Supprimer la propriété
+                del data[prop]
+                # Sauvegarder sur le fichier dictionnaire
+                self.save_data(data)
+                # Erreur
+                assert self.launchAndReturnCode() == 1
+                # Remettre le fichier original
+                self.restore_original_dict()
+                # Données recopiées
+                data = deepcopy(self.original_dict)
+        
+    def test_type(self, subtests : pytest.Subtests):
+        # Capture du dictionnaire original
+        self.save_original_dict()
+
+        # Données à travailler
+        data: dict = deepcopy(self.original_dict)
+
+        prop_to_test = ["emotions", "intensites", "casier_depart", "casiers"]
+
+        # Pour chaque propriété, on remplace par un entier
+        for prop in prop_to_test:
+            with subtests.test("Remplacement propriété", prop=prop):
+                data[prop] = 45
+                # Sauvegarder sur le fichier dictionnaire
+                self.save_data(data)
+                # Erreur
+                assert self.launchAndReturnCode() == 1
+                # Remettre le fichier original
+                self.restore_original_dict()
+                # Données recopiées
+                data = deepcopy(self.original_dict)
+        
+        # Pour chaque propriété d'un casier, on remplace par un type non supporté
+        with subtests.test("Remplacement casiers - ligne"):
+            # Prendre une entrée au hasard
+            i = randint(0, len(data["casiers"]) - 1)
+            # Modifier valeur
+            data["casiers"][i]["ligne"] = "a"
+
+            self.save_data(data)
+            assert self.launchAndReturnCode() == 1
+            self.restore_original_dict()
+            data = deepcopy(self.original_dict)
+
+        with subtests.test("Remplacement casiers - colonne"):
+            # Prendre une entrée au hasard
+            i = randint(0, len(data["casiers"]) - 1)
+            # Modifier valeur
+            data["casiers"][i]["colonne"] = "a"
+
+            self.save_data(data)
+            assert self.launchAndReturnCode() == 1
+            self.restore_original_dict()
+            data = deepcopy(self.original_dict)
+        
+        with subtests.test("Remplacement casiers - emotion"):
+            # Prendre une entrée au hasard
+            i = randint(0, len(data["casiers"]) - 1)
+            # Modifier valeur
+            data["casiers"][i]["emotion"] = 45
+
+            self.save_data(data)
+            assert self.launchAndReturnCode() == 1
+            self.restore_original_dict()
+            data = deepcopy(self.original_dict)
+        
+        with subtests.test("Remplacement casiers - intensite"):
+            # Prendre une entrée au hasard
+            i = randint(0, len(data["casiers"]) - 1)
+            # Modifier valeur
+            data["casiers"][i]["intensite"] = 45
+
+            self.save_data(data)
+            assert self.launchAndReturnCode() == 1
+            self.restore_original_dict()
+            data = deepcopy(self.original_dict)
+        
+        with subtests.test("Remplacement casiers - objet"):
+            # Prendre une entrée au hasard
+            i = randint(0, len(data["casiers"]) - 1)
+            # Modifier valeur
+            data["casiers"][i]["objet"] = 45
+
+            self.save_data(data)
+            assert self.launchAndReturnCode() == 1
+            self.restore_original_dict()
+            data = deepcopy(self.original_dict)
+    
+    @pytest.mark.parametrize(["i1", "i2"], [(0, 1) for i in range(10)])
+    def test_coherence(self, subtests : pytest.Subtests, i1, i2):
+        # Capture du dictionnaire original
+        self.save_original_dict()
+
+        # Données à travailler
+        data: dict = deepcopy(self.original_dict)
+        
+        # Test invalidités
+        with subtests.test("Test émotion invalide"):
+            i1 = randint(0, len(data["casiers"]) - 1)
+            data["casiers"][i1]["emotion"] = "bigleur"
+
+            self.save_data(data)
+            assert self.launchAndReturnCode() == 1
+            self.restore_original_dict()
+            data = deepcopy(self.original_dict)
+        
+        with subtests.test("Test intensité invalide"):
+            i1 = randint(0, len(data["casiers"]) - 1)
+            data["casiers"][i1]["intensite"] = "spritante"
+
+            self.save_data(data)
+            assert self.launchAndReturnCode() == 1
+            self.restore_original_dict()
+            data = deepcopy(self.original_dict)
+        
+        # Test incohérence ligne/intensité
+        with subtests.test("Test incohérence ligne/intensité"):
+            i1 = randint(0, len(data["casiers"]) - 1)
+            match data["casiers"][i1]["ligne"]:
+                case 0:
+                    data["casiers"][i1]["intensite"] = "moyenne"
+                case 1:
+                    data["casiers"][i1]["intensite"] = "forte"
+                case 2:
+                    data["casiers"][i1]["intensite"] = "faible"
+            self.save_data(data)
+            assert self.launchAndReturnCode() == 1
+            self.restore_original_dict()
+            data = deepcopy(self.original_dict)
+        
+        # Test incohérence colonne/emotion
+        with subtests.test("Test incohérence ligne/intensité"):
+            i1 = randint(0, len(data["casiers"]) - 1)
+            data["casiers"][i1]["intensite"] = data["emotions"][(data["casiers"][i1]["colonne"] + 1) % 8]
+
+            self.save_data(data)
+            assert self.launchAndReturnCode() == 1
+            self.restore_original_dict()
+            data = deepcopy(self.original_dict)
+
+class TestJSONChargerScenario:
+    def saveData(self, data):
+        # On l'enregistre
+        with open("tests/tmpscenario.json", "w", encoding="utf-8") as file_write:
+            json.dump(data, file_write)
+    
+    def launchAndReturnCode(self):
+        process = subprocess.run([sys.executable, "./demo.py", "cartes/appartement_01.json", "tests/tmpscenario.json", "donnees", "sortie.json"])
+        os.remove("tests/tmpscenario.json")
+        return process.returncode
+    
+    def test_ok(self):
+        # Charger JSON
+        with open("cartes/scenario_test.json", "r") as file:
+            data = json.load(file)
+            # On enregistre un bon fichier
+            self.saveData(data)
+            # Code bon
+            assert self.launchAndReturnCode() == 0
+    
+    def test_existence(self, subtests : pytest.Subtests):
+        # Charger JSON
+        with open("cartes/scenario_test.json", "r") as file:
+            data = json.load(file)
+            # Copie du JSON
+            data_copy = deepcopy(data)
+
+            # Pour chaque propriété
+            for prop in data_copy.keys() :
+                with subtests.test("Existence " + prop, prop=prop):
+                    # On l'enlève de la copie
+                    del data[prop]
+
+                    self.saveData(data)
+                    # Erreur
+                    assert self.launchAndReturnCode() == 1
+
+                    # On remet data
+                    data = deepcopy(data_copy)
+    
+    def test_type(self, subtests : pytest.Subtests):
+        # Charger JSON
+        with open("cartes/scenario_test.json", "r") as file:
+            data = json.load(file)
+            # Copie du JSON
+            data_copy = deepcopy(data)
+
+            # On change les propriétés par des int
+            prop_to_test = ["nom", "carte", "armoire", "demandes"]
+            for prop in prop_to_test:
+                with subtests.test("Type " + prop, prop=prop):
+                    # On change le type
+                    data[prop] = 45
+
+                    # On l'enregistre
+                    self.saveData(data)
+                    # Erreur
+                    assert self.launchAndReturnCode() == 1
+
+                    # On remet data
+                    data = deepcopy(data_copy)
+            
+            # Pour chaque demande, on test le type à l'intérieur
+            prop_to_test = ["numero", "resident", "message"]
+            for prop in prop_to_test:
+                with subtests.test("Type propriété demande - " + prop, prop=prop):
+                    # On choisit une demande au hasard
+                    i = randint(0, len(data["demandes"]) - 1)
+                    # On change le type
+                    data["demandes"][i][prop] = False
+
+                    # On l'enregistre
+                    self.saveData(data)
+                    # Erreur
+                    assert self.launchAndReturnCode() == 1
+
+                    # On remet data
+                    data = deepcopy(data_copy)
