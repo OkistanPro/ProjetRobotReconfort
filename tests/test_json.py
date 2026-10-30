@@ -642,6 +642,19 @@ class TestJSONChargerArmoire:
             assert self.launchAndReturnCode() == 1
             self.restore_original_dict()
             data = deepcopy(self.original_dict)
+        
+        # Test casier en double
+        with subtests.test("Test casier en double"):
+            i1 = randint(1, len(data["casiers"]) - 1)
+            data["casiers"][i1]["ligne"] = 0
+            data["casiers"][i1]["colonne"] = 0
+            data["casiers"][i1]["emotion"] = data["emotions"][data["casiers"][i1]["colonne"]]
+            data["casiers"][i1]["intensite"] = "faible"
+
+            self.save_data(data)
+            assert self.launchAndReturnCode() == 1
+            self.restore_original_dict()
+            data = deepcopy(self.original_dict)
 
 class TestJSONChargerScenario:
     def saveData(self, data):
