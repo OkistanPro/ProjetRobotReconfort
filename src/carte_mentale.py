@@ -37,6 +37,21 @@ class CarteMentale(Carte):
         ligne_dico[position_dictionnaire[1]] = "D"
         self.grille[position_dictionnaire[0]] = "".join(ligne_dico)
     
+    def getCase(self, pos : tuple[int, int], adj : MOUVEMENT) -> tuple[int, int]:
+        match adj:
+            case MOUVEMENT.N:
+                if pos[0] > 0:
+                    return (pos[0] - 1, pos[1])
+            case MOUVEMENT.S:
+                if pos[0] < self.dimensions[0] - 1:
+                    return (pos[0] + 1, pos[1])
+            case MOUVEMENT.E:
+                if pos[1] < self.dimensions[1] - 1:
+                    return (pos[0], pos[1] + 1)
+            case MOUVEMENT.O:
+                if pos[1] > 0:
+                    return (pos[0], pos[1] - 1)
+
     def saveCases(self, position_robot : tuple[int, int], cases : dict[str, str]):
         # De la forme {"N": case, "O" : case, "E" : case, "S" : case}
         for direction in cases:
