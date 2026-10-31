@@ -1,10 +1,14 @@
+from src.carte_mentale import CarteMentale
 from typing import Any
 import sys
+
+from src.robot import Robot
 from src.scenario import Scenario
 from src.resident import Resident
 from src.dictionnaire import Dictionnaire
 from src.armoire import Armoire
 from src.carte_monde import CarteMonde
+
 import reconfort_io as rio
 
 class Monde:
@@ -34,5 +38,26 @@ class Monde:
         
         self.scenario = Scenario(self.residents, scenario_dict)
 
-        self.emotions = armoire_dict["emotions"]
-        self.intensites = armoire_dict["intensites"]
+        # Initialisation des robots
+        self.agents : list[Robot] = []
+        for i in range(nb_robots):
+            self.agents.append(Robot(
+                carte_dict["depart_robot"],
+                CarteMentale(
+                    self.carte.dimensions,
+                    [carte_dict["depart_robot"]],
+                    [resident.position for resident in self.residents],
+                    self.armoire.position,
+                    self.dico.position
+                ),
+                None,
+                None))
+
+        self.emotions : list[str] = armoire_dict["emotions"]
+        self.intensites : list[str] = armoire_dict["intensites"]
+
+        self.nom_carte = carte_dict["nom"]
+        self.nom_scenario = scenario_dict["nom"]
+    
+    def __repr__(self) -> str:
+        return self.carte.__repr__()

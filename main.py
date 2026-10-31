@@ -14,11 +14,23 @@ toutes les demandes. C'est a vous d'ecrire celui qui reussit.
         donnees sorties/trace_01.json
 """
 
+from src.e_etats import ETATS
+from time import sleep
+from typing import Any
+from src.armoire import Armoire
 import sys
 from pathlib import Path
 import reconfort_io as rio
 
 from src.monde import Monde
+from src.e_mouvement import MOUVEMENT
+
+import os, platform
+def clear():
+   if platform.system() == 'Windows':
+      os.system('cls')
+   else:
+      os.system('clear')
 
 if __name__ == "__main__":
     if len(sys.argv) != 5:
@@ -41,4 +53,61 @@ if __name__ == "__main__":
         1
     )
 
-    print(monde)
+    trace = rio.Trace(
+        nom_carte=monde.nom_carte,
+        nom_scenario=monde.nom_scenario,
+        equipe=["Jonathan Merlet", "Emmanuel Sanchez"],
+    )
+
+    # Envoyer le premier scénario
+    for robot in monde.agents:
+        robot.trace = trace
+        if robot.etat == ETATS.IDLE:
+            robot.demande_courante = monde.scenario.nextDemande()
+            robot.id_demande = monde.scenario.ind_demande
+
+    while monde.agents[0].demande_courante != None:
+        for robot in monde.agents:
+            robot.PERCEVOIR(monde.carte, monde.armoire)
+        for robot in monde.agents:
+            robot.MEMORISER()
+        for robot in monde.agents:
+            robot.DECISION()
+        for robot in monde.agents:
+            ancienne_position = robot.position
+            robot.ACTION(monde.dico, monde.armoire)
+            if robot.position != ancienne_position:
+                if ancienne_position[0] != robot.position[0]:
+                    ligne1: list[str] = list(monde.carte.grille[ancienne_position[0]])
+                    ligne2: list[str] = list(monde.carte.grille[robot.position[0]])
+                    ligne1[ancienne_position[1]] = "."
+                    ligne2[robot.position[1]] = "R"
+                    monde.carte.grille[ancienne_position[0]] = "".join(ligne1)
+                    monde.carte.grille[robot.position[0]] = "".join(ligne2)
+                else:
+                    ligne: list[str] = list(monde.carte.grille[ancienne_position[0]])
+                    ligne[ancienne_position[1]] = "."
+                    ligne[robot.position[1]] = "R"
+                    monde.carte.grille[ancienne_position[0]] = "".join(ligne)
+        clear()
+        print("-- Carte du monde --")
+        print(monde)
+        for robot in monde.agents:
+            print("-- Carte mentale --")
+            robot.carte_mentale.afficher_carte(robot.chemin_courant)
+            print("-- Armoire mentale --")
+            print(robot.armoire_mentale[0])
+            print(robot.armoire_mentale[1])
+            print(robot.armoire_mentale[2])
+            print("-- Demande courante :", monde.scenario.demandes[monde.scenario.ind_demande]["resident"].nom, ":", monde.scenario.demandes[monde.scenario.ind_demande]["message"])
+            print("-- Objet à la main :", robot.inventaire)
+            print("-- ETAT :", robot.etat.name)
+            print("-- CURSEUR ARMOIRE:", monde.armoire.curseur)
+        sleep(0.3)
+        for robot in monde.agents:
+            if robot.etat == ETATS.IDLE:
+                robot.demande_courante = monde.scenario.nextDemande()
+                robot.id_demande = monde.scenario.ind_demande
+        
+    trace.ecrire(Path(sys.argv[4]))
+    print("FIN")

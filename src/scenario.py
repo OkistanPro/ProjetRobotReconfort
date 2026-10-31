@@ -1,3 +1,4 @@
+from src.resident import Resident
 from typing import Any
 class Scenario:
     def __init__(self, residents : list[Resident], dico : dict[str, Any]=None):
