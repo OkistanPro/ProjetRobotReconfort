@@ -13,8 +13,10 @@ class CarteMentale(Carte):
         position_armoire : tuple[int, int],
         position_dictionnaire : tuple[int, int]
     ):
-        self.dimensions = dimensions
-        self.grille = ["."*self.dimensions[1]]*self.dimensions[0]
+        new_empty_grille : list[str] = []
+        for i in range(dimensions[0]):
+            new_empty_grille.append("."*dimensions[1])
+        super().__init__(dimensions, new_empty_grille)
 
         # Placement des positions
         for pos_robot in positions_robots:

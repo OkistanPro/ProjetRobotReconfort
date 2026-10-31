@@ -3,8 +3,7 @@ from src.e_mouvement import MOUVEMENT
 
 class CarteMonde (Carte):
     def __init__(self, dimensions, grille):
-        self.dimensions = dimensions
-        self.grille = grille
+        super().__init__(dimensions, grille)
     
     def getCase(self, pos : tuple[int, int], adj : MOUVEMENT) -> str:
         match adj:

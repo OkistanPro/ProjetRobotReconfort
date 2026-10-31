@@ -1,9 +1,5 @@
 class Resident:
-    id : str
-    nom : str
-    position : tuple[int, int]
-
     def __init__(self, id, nom, position):
-        self.id = id
-        self.nom = nom
-        self.position = position
+        self.id : str = id
+        self.nom : str = nom
+        self.position : tuple[int, int] = position

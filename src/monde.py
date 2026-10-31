@@ -8,15 +8,6 @@ from src.carte_monde import CarteMonde
 import reconfort_io as rio
 
 class Monde:
-    carte : CarteMonde
-    armoire : Armoire
-    dico : Dictionnaire
-    residents : list[Resident] = []
-    scenario : Scenario
-
-    emotions : list[str]
-    intensites : list[str]
-
     def __init__(self, path_carte : str, path_dico : str, path_armoire : str, path_scenario : str, nb_robots : int = 1):
         carte_dict: dict[str, Any]
         scenario_dict: dict[str, Any]
@@ -33,15 +24,15 @@ class Monde:
             return 1
         
         # A partir des dicts, créer les objets
-        self.carte = CarteMonde(carte_dict["dimensions"], carte_dict["grille"])
-        self.armoire = Armoire(carte_dict["armoire"]["position"], armoire_dict["casier_depart"], armoire_dict["casiers"])
+        self.carte = CarteMonde((carte_dict["dimensions"]["hauteur"], carte_dict["dimensions"]["largeur"]), carte_dict["grille"])
+        self.armoire = Armoire(carte_dict["armoire"]["position"], [armoire_dict["casier_depart"][1], armoire_dict["casier_depart"][0]], armoire_dict["casiers"])
         self.dico = Dictionnaire(carte_dict["dictionnaire"]["position"], dictionnaire_dict)
-
+        self.residents : list[Resident] = []
         # Pour chaque résident
         for resident in carte_dict["residents"]:
             self.residents.append(Resident(resident["id"], resident["nom"], resident["position"]))
         
-        self.scenario = Scenario(scenario_dict)
+        self.scenario = Scenario(self.residents, scenario_dict)
 
         self.emotions = armoire_dict["emotions"]
         self.intensites = armoire_dict["intensites"]

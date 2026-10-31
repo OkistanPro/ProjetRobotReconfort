@@ -2,17 +2,12 @@ from typing import Any
 from src.e_mouvement import MOUVEMENT
 
 class Armoire:
-    position: tuple[int, int]
-    curseur: list[int, int]
-    en_utilisation: bool
-    casiers: list[list[str]]
-
     def __init__(self, position_carte: tuple[int, int], curseur_depart: list[int, int], casiers: list[dict[str, Any]]):
-        self.position = position_carte
-        self.curseur = curseur_depart
+        self.position: tuple[int, int] = position_carte
+        self.curseur: list[int] = curseur_depart
         self.en_utilisation = False
         # On suppose casiers même forme que dans armoire_standard.json
-        self.casiers = [[None]*8, [None]*8, [None]*8]
+        self.casiers: list[list[str]] = [[None]*8, [None]*8, [None]*8]
         for objet in casiers:
             self.casiers[objet["ligne"]][objet["colonne"]] = objet["objet"]
         
@@ -27,3 +22,6 @@ class Armoire:
                     self.curseur[1] = (self.curseur[1] - 1) % 8
                 case MOUVEMENT.E:
                     self.curseur[1] = (self.curseur[1] + 1) % 8
+
+    def __repr__(self) -> str:
+        return str(self.casiers)
