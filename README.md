@@ -40,6 +40,12 @@ python -m pip install pytest==9.2.0
 pytest -v
 ```
 
+Il est possible que les tests ne fonctionnent pas et qu'il faille effectuer u
+```
+git reset --hard origin/test
+```
+pour pouvoir exécuter le code normalement par la suite (c'est possiblement un problème unique à Windows).
+
 Les tests couvrent la vérification des fichiers JSON qui doivent correspondre aux schémas définies dans les fichiers `src/schema_<nom-fichier>.json`
 
 ## Organisation du code
