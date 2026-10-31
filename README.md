@@ -25,11 +25,14 @@ Dépendances :
 - pytest 9.2.0
 
 Pour les installer :
-- python -m venv .venv
-- .venv\Scripts\activate
-- python -m pip install colorama==0.4.6
-- python -m pip install jsonschema==4.26.0
-- python -m pip install pytest==9.2.0
+
+```
+python -m venv .venv
+.venv\Scripts\activate
+python -m pip install colorama==0.4.6
+python -m pip install jsonschema==4.26.0
+python -m pip install pytest==9.2.0
+```
 
 ## Tester
 
