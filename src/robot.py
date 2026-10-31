@@ -359,6 +359,7 @@ class Robot():
                         False,
                         "dictionnaire inaccessible"
                     )
+                    self.etat = ETATS.ARRET
                 case ETATS.ERREUR_EMOTION_INDETERMINEE:
                     self.trace.ajouter_livraison(
                         self.id_demande,
