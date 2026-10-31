@@ -50,6 +50,9 @@ class Robot():
             "moyenne",
             "forte"
         ]
+        self.repli : str = "aucun"
+        self.succes : bool = True
+        self.motif_echec : str = ""
 
     def AVANCER(self, to: tuple[int, int]):
         if self.carte_mentale.grille[to[0]][to[1]] != "#":
@@ -63,7 +66,8 @@ class Robot():
             emotion_intensite: tuple[int, int] = dico.getEmotionIntensite(mot)
             if emotion_intensite != None:
                 self.perception["dico"] = emotion_intensite
-        if "dico" not in self.perception: pass # Aucun mot reconnu
+        if "dico" not in self.perception: 
+            self.etat = ETATS.ERREUR_EMOTION_INDETERMINEE
         else:
             self.etat = ETATS.MOVING_ARMOIRE
     
@@ -121,7 +125,7 @@ class Robot():
                 self.armoire_mentale[self.curseur_courant[1]][self.curseur_courant[0]] = self.contenu_casier
     
     def DECISION(self):
-        while not self.actions:
+        while not self.actions and self.etat != ETATS.ARRET:
             match self.etat:
                 # ---- IDLE ---- #
                 case ETATS.IDLE:
@@ -256,6 +260,7 @@ class Robot():
                     # Si aucune liste de casier à rechercher, la créer
                     if not self.liste_casier_recherche:
                         self.liste_casier_recherche = self.calcul_casier_recherche(self.perception["dico"])
+                        self.repli = "aucun"
                     
                     # Si le curseur courant n'a pas atteint le casier à rechercher
                     if self.curseur_courant != self.liste_casier_recherche[0]:
@@ -266,7 +271,14 @@ class Robot():
                             # Si l'objet regardé est vide, enlever de la liste de casier et regarder la suite
                             while a_regarder == "VIDE" and self.liste_casier_recherche:
                                 self.liste_casier_recherche.pop(0)
-                                a_regarder = self.armoire_mentale[self.liste_casier_recherche[0][1]][self.liste_casier_recherche[0][0]]
+                                if len(self.liste_casier_recherche) < 15 and len(self.liste_casier_recherche) > 11:
+                                    self.repli = "intensite"
+                                if len(self.liste_casier_recherche) <= 11 and len(self.liste_casier_recherche) > 5:
+                                    self.repli = "voisine_1"
+                                if len(self.liste_casier_recherche) <= 5:
+                                    self.repli = "voisine_2"
+                                if self.liste_casier_recherche:
+                                    a_regarder = self.armoire_mentale[self.liste_casier_recherche[0][1]][self.liste_casier_recherche[0][0]]
                             
                             # Si la liste est vide, objet n'est pas là
                             if not self.liste_casier_recherche:
@@ -284,18 +296,83 @@ class Robot():
                         # Sinon, enlever de la liste
                         else:
                             self.liste_casier_recherche.pop(0)
+                            if len(self.liste_casier_recherche) < 15 and len(self.liste_casier_recherche) > 11:
+                                self.repli = "intensite"
+                            if len(self.liste_casier_recherche) <= 11 and len(self.liste_casier_recherche) > 5:
+                                self.repli = "voisine_1"
+                            if len(self.liste_casier_recherche) <= 5:
+                                self.repli = "voisine_2"
                             # Si liste vide, objet n'est pas là
                             if not self.liste_casier_recherche:
                                 self.etat = ETATS.ERREUR_ARMOIRE_VIDE
                 
                 case ETATS.ERREUR_ARMOIRE_VIDE:
-                    pass
+                    self.trace.ajouter_livraison(
+                        self.id_demande,
+                        self.demande_courante["resident"].id,
+                        self.emotions[self.perception["dico"][0]],
+                        self.intensites[self.perception["dico"][1]],
+                        None,
+                        self.repli,
+                        None,
+                        False,
+                        "armoire vide"
+                    )
+                    self.etat = ETATS.IDLE
+                    self.demande_courante = None
+
                 case ETATS.ERREUR_CHEMIN_ARMOIRE:
-                    pass
+                    self.trace.ajouter_livraison(
+                        self.id_demande,
+                        self.demande_courante["resident"].id,
+                        self.emotions[self.perception["dico"][0]],
+                        self.intensites[self.perception["dico"][1]],
+                        None,
+                        self.repli,
+                        None,
+                        False,
+                        "armoire inaccessible"
+                    )
+                    self.etat = ETATS.ARRET
                 case ETATS.ERREUR_CHEMIN_RESIDENT:
-                    pass
+                    self.trace.ajouter_livraison(
+                        self.id_demande,
+                        self.demande_courante["resident"].id,
+                        self.emotions[self.perception["dico"][0]],
+                        self.intensites[self.perception["dico"][1]],
+                        self.casier_choisi,
+                        self.repli,
+                        None,
+                        False,
+                        "resident inaccessible"
+                    )
+                    self.etat = ETATS.ARRET
                 case ETATS.ERREUR_CHEMIN_DICO:
-                    pass
+                    self.trace.ajouter_livraison(
+                        self.id_demande,
+                        self.demande_courante["resident"].id,
+                        None,
+                        None,
+                        None,
+                        self.repli,
+                        None,
+                        False,
+                        "dictionnaire inaccessible"
+                    )
+                case ETATS.ERREUR_EMOTION_INDETERMINEE:
+                    self.trace.ajouter_livraison(
+                        self.id_demande,
+                        self.demande_courante["resident"].id,
+                        None,
+                        None,
+                        None,
+                        self.repli,
+                        None,
+                        False,
+                        "emotion indeterminee"
+                    )
+                    self.etat = ETATS.IDLE
+                    self.demande_courante = None
 
     
     def ACTION(self, dico : Dictionnaire, armoire : Armoire):
@@ -385,9 +462,12 @@ class Robot():
                     self.contenu_casier,
                     ""
                 )
+                self.casier_choisi: list[int] = armoire.curseur
             case ACTIONS.DONNER:
                 perception_no_dico: dict[str, Any] = deepcopy(self.perception)
                 if "dico" in perception_no_dico : del perception_no_dico["dico"]
+                self.objet_donné: str | None = self.inventaire
+                self.resident_courant = self.demande_courante["resident"]
                 self.DONNER()
                 self.trace.ajouter_pas(
                     self.id_demande,
@@ -399,16 +479,18 @@ class Robot():
                     self.contenu_casier,
                     ""
                 )
-                """
+                
                 self.trace.ajouter_livraison(
                     self.id_demande,
-                    self.demande_courante["resident"]["id"],
+                    self.resident_courant.id,
                     self.emotions[self.perception["dico"][0]],
                     self.intensites[self.perception["dico"][1]],
-                    [self.perception["dico"][1], self.perception["dico"][0]],
-                    0
+                    self.casier_choisi,
+                    self.repli,
+                    self.objet_donné,
+                    True
                 )
-                """
+                
     
     def deplacer_vers(self, to: tuple[int, int]):
         chemin: list[tuple[int, int]] = []

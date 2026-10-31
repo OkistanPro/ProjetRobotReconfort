@@ -73,6 +73,11 @@ if __name__ == "__main__":
             robot.MEMORISER()
         for robot in monde.agents:
             robot.DECISION()
+            if robot.etat == ETATS.ARRET:
+                # On s'arrête
+                print("!!! Erreur bloquant : Robot en arrêt !!!")
+                trace.ecrire(Path(sys.argv[4]))
+                exit(1)
         for robot in monde.agents:
             ancienne_position = robot.position
             robot.ACTION(monde.dico, monde.armoire)
