@@ -33,12 +33,14 @@ def clear():
       os.system('clear')
 
 if __name__ == "__main__":
-    if len(sys.argv) != 5:
+    if len(sys.argv) != 6:
         print(__doc__.strip())
         exit(2)
     
     chemin_carte, chemin_scenario = Path(sys.argv[1]), Path(sys.argv[2])
     dossier_donnees, chemin_sortie = Path(sys.argv[3]), Path(sys.argv[4])
+
+    delai = float(sys.argv[5])
 
     scenario = rio.charger_scenario(chemin_scenario)
 
@@ -108,7 +110,7 @@ if __name__ == "__main__":
             print("-- Objet à la main :", robot.inventaire)
             print("-- ETAT :", robot.etat.name)
             print("-- CURSEUR ARMOIRE:", monde.armoire.curseur)
-        sleep(0.3)
+        sleep(delai)
         for robot in monde.agents:
             if robot.etat == ETATS.IDLE:
                 robot.demande_courante = monde.scenario.nextDemande()
