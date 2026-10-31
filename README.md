@@ -40,7 +40,7 @@ python -m pip install pytest==9.2.0
 pytest -v
 ```
 
-Il est possible que les tests ne fonctionnent pas et qu'il faille effectuer u
+Il est possible que les tests ne fonctionnent pas et qu'il faille effectuer la commande
 ```
 git reset --hard origin/test
 ```
