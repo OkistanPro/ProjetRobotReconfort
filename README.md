@@ -16,13 +16,20 @@ Testé sur la version 3.14
 Exemple :
 
 ```
-python agent.py cartes/appartement_01.json cartes/scenario_01.json donnees sortie.json 0.3
+python main.py cartes/appartement_01.json cartes/scenario_01.json donnees sortie.json 0.3
 ```
 
 Dépendances : 
 - colorama 0.4.6
 - jsonschema 4.26.0
 - pytest 9.2.0
+
+Pour les installer :
+- python -m venv .venv
+- .venv\Scripts\activate
+- python -m pip install colorama==0.4.6
+- python -m pip install jsonschema==4.26.0
+- python -m pip install pytest==9.2.0
 
 ## Tester
 
@@ -78,4 +85,4 @@ Les tests couvrent la vérification des fichiers JSON qui doivent correspondre a
 
 ## Vidéo
 
-`demo.mp4` (ou le lien), également déclarée dans `rendu.json`.
+`demo.mp4`, également déclarée dans `rendu.json`.
