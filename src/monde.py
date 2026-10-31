@@ -1,0 +1,63 @@
+from src.carte_mentale import CarteMentale
+from typing import Any
+import sys
+
+from src.robot import Robot
+from src.scenario import Scenario
+from src.resident import Resident
+from src.dictionnaire import Dictionnaire
+from src.armoire import Armoire
+from src.carte_monde import CarteMonde
+
+import reconfort_io as rio
+
+class Monde:
+    def __init__(self, path_carte : str, path_dico : str, path_armoire : str, path_scenario : str, nb_robots : int = 1):
+        carte_dict: dict[str, Any]
+        scenario_dict: dict[str, Any]
+        dictionnaire_dict: dict[str, Any] 
+        armoire_dict: dict[str, Any]
+
+        try:
+            carte_dict = rio.charger_carte(path_carte)
+            scenario_dict = rio.charger_scenario(path_scenario)
+            dictionnaire_dict = rio.charger_dictionnaire(path_dico)
+            armoire_dict = rio.charger_armoire(path_armoire)
+        except rio.ErreurFichier as err:
+            print(f"erreur de chargement : {err}", file=sys.stderr)
+            return 1
+        
+        # A partir des dicts, créer les objets
+        self.carte = CarteMonde((carte_dict["dimensions"]["hauteur"], carte_dict["dimensions"]["largeur"]), carte_dict["grille"])
+        self.armoire = Armoire(carte_dict["armoire"]["position"], [armoire_dict["casier_depart"][1], armoire_dict["casier_depart"][0]], armoire_dict["casiers"])
+        self.dico = Dictionnaire(carte_dict["dictionnaire"]["position"], dictionnaire_dict)
+        self.residents : list[Resident] = []
+        # Pour chaque résident
+        for resident in carte_dict["residents"]:
+            self.residents.append(Resident(resident["id"], resident["nom"], resident["position"]))
+        
+        self.scenario = Scenario(self.residents, scenario_dict)
+
+        # Initialisation des robots
+        self.agents : list[Robot] = []
+        for i in range(nb_robots):
+            self.agents.append(Robot(
+                carte_dict["depart_robot"],
+                CarteMentale(
+                    self.carte.dimensions,
+                    [carte_dict["depart_robot"]],
+                    [resident.position for resident in self.residents],
+                    self.armoire.position,
+                    self.dico.position
+                ),
+                None,
+                None))
+
+        self.emotions : list[str] = armoire_dict["emotions"]
+        self.intensites : list[str] = armoire_dict["intensites"]
+
+        self.nom_carte = carte_dict["nom"]
+        self.nom_scenario = scenario_dict["nom"]
+    
+    def __repr__(self) -> str:
+        return self.carte.__repr__()
